@@ -3,6 +3,15 @@ name = "mage"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+gl = "0.14.0"
+hecs = "0.7.6"
+image = "0.24.0"
+include_dir = "0.7.2"
+itertools = "0.10.3"
+log = "0.4.14"
+nalgebra = "0.30.1"
+num-traits = "0.2.14"
+regex = "1.5.4"
+russimp = "1.0.1"
+sdl2 = "0.35.2"

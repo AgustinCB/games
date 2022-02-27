@@ -22,6 +22,9 @@ not publish it as a crate nor provide support for it.
    learning project, and I do not know what to optimize yet, I will make a point to make the library's goal to function
    and not to be the best performant. If it can barely run at 60FPS, that is enough.
 
+5. **Silent failure**: This is a game engine. Errors should not cause panic. Rather, the engine will log them and try to
+   recover from them.
+
 ## Library Structure
 
 - **`crate::core`**: This section contains the main functionality for a game. Particularly, the structures `Game`
