@@ -23,3 +23,6 @@ pub mod vertex_array;
 pub mod render_buffer;
 pub mod program;
 pub mod texture;
+pub mod frame_buffer;
+pub mod multiple_render_target;
+pub mod ping_pong_frame_buffer;

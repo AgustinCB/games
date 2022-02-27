@@ -87,13 +87,13 @@ impl Texture {
         gl_function!(BindTexture(self.1 as _, 0));
     }
 
-    pub fn bind_as(&self, unit: gl::types::GLenum, texture_type: gl::types::GLenum) {
-        gl_function!(ActiveTexture(unit));
-        gl_function!(BindTexture(texture_type, self.0));
+    pub fn bind_as(&self, unit: u32, texture_type: TextureType) {
+        gl_function!(ActiveTexture(gl::TEXTURE0 + unit));
+        gl_function!(BindTexture(texture_type as _, self.0));
     }
 
-    pub fn bind(&self, unit: gl::types::GLenum) {
-        gl_function!(ActiveTexture(unit));
+    pub fn bind(&self, unit: u32) {
+        gl_function!(ActiveTexture(gl::TEXTURE0 + unit));
         self.just_bind();
     }
 
