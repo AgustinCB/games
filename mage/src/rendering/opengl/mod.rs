@@ -20,3 +20,5 @@ macro_rules! gl_function {
 pub mod buffer;
 pub mod shader;
 pub mod vertex_array;
+pub mod render_buffer;
+pub mod program;
