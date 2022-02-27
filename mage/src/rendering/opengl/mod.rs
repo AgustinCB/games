@@ -22,3 +22,4 @@ pub mod shader;
 pub mod vertex_array;
 pub mod render_buffer;
 pub mod program;
+pub mod texture;
