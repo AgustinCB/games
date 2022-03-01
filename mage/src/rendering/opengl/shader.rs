@@ -3,6 +3,9 @@ use std::mem::transmute;
 use std::ptr;
 
 use gl;
+use thiserror::Error;
+
+use crate::MageError;
 
 #[repr(u32)]
 #[derive(Clone, Copy, Debug)]
@@ -12,10 +15,16 @@ pub enum ShaderType {
     Vertex = gl::VERTEX_SHADER,
 }
 
+#[derive(Debug, Error)]
+pub enum ShaderError {
+    #[error("Error creating shader: {0}")]
+    CreationFailed(String),
+}
+
 fn check_success(
     resource: gl::types::GLuint,
     success_type: gl::types::GLenum,
-) -> Result<(), String> {
+) -> Result<(), MageError> {
     let mut status = gl::FALSE as gl::types::GLint;
     gl_function!(GetShaderiv(resource, success_type, &mut status));
 
@@ -34,7 +43,7 @@ fn check_success(
             .expect("ShaderInfoLog not valid utf8")
             .to_string();
         log::error!("{}", &s);
-        Err(s)
+        Err(ShaderError::CreationFailed(s).into())
     } else {
         Ok(())
     }
@@ -43,7 +52,7 @@ fn check_success(
 pub struct Shader(pub(crate) gl::types::GLuint);
 
 impl Shader {
-    pub fn new(shader_type: ShaderType, content: &str) -> Result<Shader, String> {
+    pub fn new(shader_type: ShaderType, content: &str) -> Result<Shader, MageError> {
         let shader = gl_function!(CreateShader(shader_type as _));
         let c_str = CString::new(content.as_bytes()).unwrap();
         gl_function!(ShaderSource(shader, 1, &c_str.as_ptr(), ptr::null()));

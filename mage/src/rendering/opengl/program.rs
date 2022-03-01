@@ -7,13 +7,21 @@ use std::ptr;
 use gl;
 use log::warn;
 use nalgebra::{Matrix4, Vector3, Vector4};
+use thiserror::Error;
 
+use crate::MageError;
 use crate::rendering::opengl::shader::Shader;
+
+#[derive(Debug, Error)]
+pub enum ProgramError {
+    #[error("Error creating program: {0}")]
+    CreationFailed(String),
+}
 
 fn check_success(
     resource: gl::types::GLuint,
     success_type: gl::types::GLenum,
-) -> Result<(), String> {
+) -> Result<(), MageError> {
     let mut status = gl::FALSE as gl::types::GLint;
     gl_function!(GetProgramiv(resource, success_type, &mut status));
 
@@ -32,7 +40,7 @@ fn check_success(
             .expect("ProgramInfoLog not valid utf8")
             .to_string();
         log::error!("{}", &s);
-        Err(s)
+        Err(ProgramError::CreationFailed(s).into())
     } else {
         Ok(())
     }
@@ -44,7 +52,7 @@ pub struct Program {
 }
 
 impl Program {
-    pub fn new(vertex_shader: Shader, fragment_shader: Shader) -> Result<Program, String> {
+    pub fn new(vertex_shader: Shader, fragment_shader: Shader) -> Result<Program, MageError> {
         let resource = gl_function!(CreateProgram());
         gl_function!(AttachShader(resource, vertex_shader.0));
         gl_function!(AttachShader(resource, fragment_shader.0));
@@ -56,7 +64,7 @@ impl Program {
         })
     }
 
-    pub fn with_geometry(vertex_shader: Shader, fragment_shader: Shader, geometry_shader: Shader) -> Result<Program, String> {
+    pub fn with_geometry(vertex_shader: Shader, fragment_shader: Shader, geometry_shader: Shader) -> Result<Program, MageError> {
         let resource = gl_function!(CreateProgram());
         gl_function!(AttachShader(resource, vertex_shader.0));
         gl_function!(AttachShader(resource, geometry_shader.0));
