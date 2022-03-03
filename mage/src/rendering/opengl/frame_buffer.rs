@@ -1,7 +1,7 @@
 use log::error;
 
 use crate::rendering::opengl::render_buffer::RenderBuffer;
-use crate::rendering::opengl::texture::{Texture, TextureFormat, TextureParameter, TextureParameterValue, TextureType};
+use crate::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat, TextureParameter, TextureParameterValue};
 
 #[derive(Debug)]
 pub struct FrameBuffer {
@@ -20,14 +20,14 @@ impl FrameBuffer {
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 
-        let texture = Texture::new(TextureType::Texture2D);
+        let texture = Texture::new(TextureDimension::Texture2D);
         texture.just_bind();
         texture.allocate_space(width, height, format);
         texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::Linear);
         texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Linear);
         texture.unbind();
 
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureType::Texture2D as u32, texture.0, 0));
+        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2D as u32, texture.0, 0));
 
         let render_buffer = RenderBuffer::new();
         render_buffer.bind();
@@ -52,12 +52,12 @@ impl FrameBuffer {
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 
-        let texture = Texture::new(TextureType::Texture2D);
+        let texture = Texture::new(TextureDimension::Texture2D);
         texture.just_bind();
         texture.allocate_space(width, height, format);
         texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::Nearest);
         texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Nearest);
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureType::Texture2D as u32, texture.0, 0));
+        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2D as u32, texture.0, 0));
 
         let status = gl_function!(CheckFramebufferStatus(gl::FRAMEBUFFER));
         if status != gl::FRAMEBUFFER_COMPLETE {
@@ -76,12 +76,12 @@ impl FrameBuffer {
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 
-        let texture = Texture::new(TextureType::Texture2D);
+        let texture = Texture::new(TextureDimension::Texture2D);
         texture.just_bind();
         texture.allocate_space(width, height, TextureFormat::UnsignedByte);
         texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::Linear);
         texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Linear);
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureType::Texture2D as u32, texture.0, 0));
+        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2D as u32, texture.0, 0));
 
         let status = gl_function!(CheckFramebufferStatus(gl::FRAMEBUFFER));
         if status != gl::FRAMEBUFFER_COMPLETE {
@@ -100,12 +100,12 @@ impl FrameBuffer {
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 
-        let texture = Texture::new(TextureType::Texture2DMultisample);
+        let texture = Texture::new(TextureDimension::Texture2DMultisample);
         texture.just_bind();
-        gl_function!(TexImage2DMultisample(TextureType::Texture2DMultisample as _, 4, gl::RGB, width as i32, height as i32, gl::TRUE));
+        gl_function!(TexImage2DMultisample(TextureDimension::Texture2DMultisample as _, 4, gl::RGB, width as i32, height as i32, gl::TRUE));
         texture.unbind();
 
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureType::Texture2DMultisample as u32, texture.0, 0));
+        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2DMultisample as u32, texture.0, 0));
 
         let render_buffer = RenderBuffer::new();
         render_buffer.bind();
@@ -129,7 +129,7 @@ impl FrameBuffer {
         let mut frame_buffer = 0 as gl::types::GLuint;
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
 
-        let texture = Texture::new(TextureType::Texture2D);
+        let texture = Texture::new(TextureDimension::Texture2D);
         texture.just_bind();
         texture.allocate_space(width, height, TextureFormat::Depth);
         texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::Nearest);

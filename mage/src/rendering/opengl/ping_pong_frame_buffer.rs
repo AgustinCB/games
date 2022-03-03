@@ -1,4 +1,4 @@
-use crate::rendering::opengl::texture::{Texture, TextureFormat, TextureParameter, TextureParameterValue, TextureType};
+use crate::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat, TextureParameter, TextureParameterValue};
 
 #[derive(Debug)]
 pub struct PingPongFrameBuffer {
@@ -19,7 +19,7 @@ impl PingPongFrameBuffer {
         gl_function!(GenFramebuffers(2, ping_pong_fbs.as_mut_ptr()));
 
         for i in 0..2 {
-            let texture = Texture::new(TextureType::Texture2D);
+            let texture = Texture::new(TextureDimension::Texture2D);
             gl_function!(BindFramebuffer(gl::FRAMEBUFFER, ping_pong_fbs[i]));
             texture.just_bind();
             texture.allocate_space(width as u32, height as u32, format);
@@ -27,7 +27,7 @@ impl PingPongFrameBuffer {
             texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Linear);
             texture.set_parameter(TextureParameter::TextureWrapS, TextureParameterValue::ClampToBorder);
             texture.set_parameter(TextureParameter::TextureWrapT, TextureParameterValue::ClampToBorder);
-            gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureType::Texture2D as _, texture.0, 0));
+            gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2D as _, texture.0, 0));
             textures.push(texture)
         }
         let mut textures = textures.into_iter();

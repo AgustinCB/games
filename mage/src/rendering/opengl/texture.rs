@@ -6,7 +6,7 @@ use itertools::Itertools;
 
 #[repr(u32)]
 #[derive(Clone, Copy, Debug)]
-pub enum TextureType {
+pub enum TextureDimension {
     Texture1D = gl::TEXTURE_1D,
     Texture2D = gl::TEXTURE_2D,
     Texture3D = gl::TEXTURE_3D,
@@ -65,10 +65,10 @@ pub enum TextureFormat {
 }
 
 #[derive(Debug)]
-pub struct Texture(pub(crate) gl::types::GLuint, pub(crate) TextureType);
+pub struct Texture(pub(crate) gl::types::GLuint, pub(crate) TextureDimension);
 
 impl Texture {
-    pub fn multiple(texture_types: Vec<TextureType>) -> Vec<Texture> {
+    pub fn multiple(texture_types: Vec<TextureDimension>) -> Vec<Texture> {
         let mut texture_resources = [0].repeat(texture_types.len());
         gl_function!(GenTextures(texture_types.len() as i32, texture_resources.as_mut_ptr()));
         texture_resources.into_iter()
@@ -77,7 +77,7 @@ impl Texture {
             .collect_vec()
     }
 
-    pub fn new(texture_type: TextureType) -> Texture {
+    pub fn new(texture_type: TextureDimension) -> Texture {
         let mut texture = 0 as gl::types::GLuint;
         gl_function!(GenTextures(1, &mut texture));
         Texture(texture, texture_type)
@@ -87,7 +87,7 @@ impl Texture {
         gl_function!(BindTexture(self.1 as _, 0));
     }
 
-    pub fn bind_as(&self, unit: u32, texture_type: TextureType) {
+    pub fn bind_as(&self, unit: u32, texture_type: TextureDimension) {
         gl_function!(ActiveTexture(gl::TEXTURE0 + unit));
         gl_function!(BindTexture(texture_type as _, self.0));
     }
@@ -135,7 +135,7 @@ impl Texture {
 
     pub fn set_image_2d<T>(&self, width: u32, height: u32, data: &[T], format: TextureFormat) {
         match (self.1, format) {
-            (TextureType::Texture2D, TextureFormat::UnsignedByte) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::UnsignedByte) => gl_function!(TexImage2D(
                 self.1 as _,
                 0,
                 gl::RGB as _,
@@ -146,7 +146,7 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 transmute(&(data[0]) as *const T)
             )),
-            (TextureType::Texture2D, TextureFormat::UnsignedByteWithAlpha) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::UnsignedByteWithAlpha) => gl_function!(TexImage2D(
                 self.1 as _,
                 0,
                 gl::RGBA as _,
@@ -157,7 +157,7 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 transmute(&(data[0]) as *const T)
             )),
-            (TextureType::Texture2D, TextureFormat::FloatingPoint) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::FloatingPoint) => gl_function!(TexImage2D(
                 self.1 as _,
                 0,
                 gl::RGBA16F as _,
@@ -174,7 +174,7 @@ impl Texture {
 
     pub fn allocate_space(&self, width: u32, height: u32, format: TextureFormat) {
         match (self.1, format) {
-            (TextureType::Texture2D, TextureFormat::UnsignedByte) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::UnsignedByte) => gl_function!(TexImage2D(
                 self.1 as _,
                 0,
                 gl::RGB as _,
@@ -185,7 +185,7 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 ptr::null(),
             )),
-            (TextureType::Texture2D, TextureFormat::UnsignedByteWithAlpha) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::UnsignedByteWithAlpha) => gl_function!(TexImage2D(
                 self.1 as _,
                 0,
                 gl::RGBA as _,
@@ -196,7 +196,7 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 ptr::null(),
             )),
-            (TextureType::Texture2D, TextureFormat::FloatingPoint) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::FloatingPoint) => gl_function!(TexImage2D(
                 self.1 as _,
                 0,
                 gl::RGBA16F as _,
@@ -207,10 +207,10 @@ impl Texture {
                 gl::FLOAT,
                 ptr::null(),
             )),
-            (TextureType::Texture2D, TextureFormat::Grey) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::Grey) => gl_function!(TexImage2D(
                 self.1 as _, 0, gl::RED as _, width as _, height as _, 0, gl::RED as _, gl::FLOAT, ptr::null(),
             )),
-            (TextureType::Texture2D, TextureFormat::Depth) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::Depth) => gl_function!(TexImage2D(
                 self.1 as _, 0, gl::DEPTH_COMPONENT as _, width as _, height as _, 0, gl::DEPTH_COMPONENT as _, gl::FLOAT, ptr::null(),
             )),
             _ => unimplemented!(),

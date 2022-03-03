@@ -3,16 +3,17 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::video::GLProfile;
 
+use mage::rendering::model::quad::quad;
 use mage::rendering::opengl::{clear, draw, DrawingBuffer, DrawingMode, OpenGlType, set_clear_color};
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::{Shader, ShaderType};
-use mage::rendering::opengl::texture::{Texture, TextureFormat, TextureParameter, TextureParameterValue, TextureType};
+use mage::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat, TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::vertex_array::{DataType, VertexArray};
 
 const VERTEX_SHADER: &'static str = "#version 330 core
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
+layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
 
 out vec3 ourColor;
@@ -20,8 +21,9 @@ out vec2 TexCoord;
 
 void main()
 {
-    gl_Position = vec4(aPos, 1.0);
-    ourColor = aColor;
+    vec3 position = aPos * 0.5;
+    gl_Position = vec4(position, 1.0);
+    ourColor = vec3(aTexCoord, 1.0);
     TexCoord = vec2(aTexCoord.x, aTexCoord.y);
 }";
 
@@ -37,11 +39,6 @@ void main()
 {
     FragColor = texture(texture1, TexCoord) * vec4(ourColor, 1);
 }";
-const VERTICES: [f32; 32] = [
-    0.5f32, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -0.5, -0.5,
-    0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0,
-];
-const INDICES: [u32; 6] = [0, 1, 3, 1, 2, 3];
 
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -67,19 +64,20 @@ pub fn main() {
         Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
         Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
     ).unwrap();
+    let quad = quad(vec![]);
     let vertex_array = VertexArray::new();
     let array_buffer = Buffer::new(BufferType::Array);
     let element_buffer = Buffer::new(BufferType::ElementArray);
     vertex_array.bind();
     array_buffer.bind();
-    array_buffer.set_data(&VERTICES, BufferUsage::StaticDraw);
+    array_buffer.set_data(&quad.flattened_data(), BufferUsage::StaticDraw);
     element_buffer.bind();
-    element_buffer.set_data(&INDICES, BufferUsage::StaticDraw);
+    element_buffer.set_data(&quad.indices.clone().unwrap(), BufferUsage::StaticDraw);
     VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 0, 8, 3, 0, false);
     VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 1, 8, 3, 3, false);
     VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 2, 8, 2, 6, false);
 
-    let texture = Texture::new(TextureType::Texture2D);
+    let texture = Texture::new(TextureDimension::Texture2D);
     texture.bind(0);
     texture.set_parameter(TextureParameter::TextureWrapS, TextureParameterValue::Repeat);
     texture.set_parameter(TextureParameter::TextureWrapT, TextureParameterValue::Repeat);

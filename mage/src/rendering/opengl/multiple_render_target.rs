@@ -2,10 +2,10 @@ use itertools::Itertools;
 use log::error;
 
 use crate::rendering::opengl::render_buffer::RenderBuffer;
-use crate::rendering::opengl::texture::{Texture, TextureFormat, TextureParameter, TextureParameterValue, TextureType};
+use crate::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat, TextureParameter, TextureParameterValue};
 
 fn textures_with_formats(width: u32, height: u32, formats: &[TextureFormat]) -> Vec<Texture> {
-    let textures = Texture::multiple([TextureType::Texture2D].repeat(formats.len()));
+    let textures = Texture::multiple([TextureDimension::Texture2D].repeat(formats.len()));
     for (i, (format, texture)) in formats.iter().zip(&textures).enumerate() {
         texture.just_bind();
         texture.allocate_space(width, height, *format);
@@ -14,7 +14,7 @@ fn textures_with_formats(width: u32, height: u32, formats: &[TextureFormat]) -> 
         texture.set_parameter(TextureParameter::TextureWrapS, TextureParameterValue::ClampToBorder);
         texture.set_parameter(TextureParameter::TextureWrapT, TextureParameterValue::ClampToBorder);
         texture.unbind();
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0 + i as u32, TextureType::Texture2D as u32, texture.0, 0));
+        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0 + i as u32, TextureDimension::Texture2D as u32, texture.0, 0));
     }
     textures
 }
