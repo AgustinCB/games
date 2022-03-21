@@ -4,8 +4,9 @@ use itertools::Itertools;
 pub struct RenderBuffer(pub(crate) gl::types::GLuint);
 
 impl RenderBuffer {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> RenderBuffer {
-        let mut buffer = 0 as gl::types::GLuint;
+        let mut buffer = 0u32;
         gl_function!(GenRenderbuffers(1, &mut buffer));
         RenderBuffer(buffer)
     }
@@ -15,7 +16,7 @@ impl RenderBuffer {
         gl_function!(GenRenderbuffers(S as i32, render_buffers.as_mut_ptr()));
         render_buffers
             .into_iter()
-            .map(|r| RenderBuffer(r))
+            .map(RenderBuffer)
             .collect_vec()
     }
 
@@ -30,7 +31,7 @@ impl RenderBuffer {
 
 impl Drop for RenderBuffer {
     fn drop(&mut self) {
-        gl_function!(DeleteRenderbuffers(1, &mut self.0));
+        gl_function!(DeleteRenderbuffers(1, &self.0));
     }
 }
 

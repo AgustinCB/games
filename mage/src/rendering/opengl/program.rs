@@ -36,7 +36,6 @@ fn check_success(
             buf.as_mut_ptr() as *mut gl::types::GLchar,
         ));
         let s = std::str::from_utf8(&buf)
-            .ok()
             .expect("ProgramInfoLog not valid utf8")
             .to_string();
         log::error!("{}", &s);

@@ -18,7 +18,7 @@ impl FrameBuffer {
     }
 
     pub fn new_with_format(width: u32, height: u32, format: TextureFormat) -> FrameBuffer {
-        let mut frame_buffer = 0 as gl::types::GLuint;
+        let mut frame_buffer = 0u32;
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 
@@ -72,7 +72,7 @@ impl FrameBuffer {
     }
 
     pub fn intermediate_with_format(width: u32, height: u32, format: TextureFormat) -> FrameBuffer {
-        let mut frame_buffer = 0 as gl::types::GLuint;
+        let mut frame_buffer = 0u32;
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 
@@ -108,7 +108,7 @@ impl FrameBuffer {
     }
 
     pub fn intermediate(width: u32, height: u32) -> FrameBuffer {
-        let mut frame_buffer = 0 as gl::types::GLuint;
+        let mut frame_buffer = 0u32;
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 
@@ -144,7 +144,7 @@ impl FrameBuffer {
     }
 
     pub fn multisample(width: u32, height: u32) -> FrameBuffer {
-        let mut frame_buffer = 0 as gl::types::GLuint;
+        let mut frame_buffer = 0u32;
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 
@@ -198,7 +198,7 @@ impl FrameBuffer {
     }
 
     pub fn depth_buffer(width: u32, height: u32) -> FrameBuffer {
-        let mut frame_buffer = 0 as gl::types::GLuint;
+        let mut frame_buffer = 0u32;
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
 
         let texture = Texture::new(TextureDimension::Texture2D);
@@ -246,7 +246,7 @@ impl FrameBuffer {
     }
 
     pub fn depth_cubemap_with_texture(texture: Texture) -> FrameBuffer {
-        let mut frame_buffer = 0 as gl::types::GLuint;
+        let mut frame_buffer = 0u32;
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
 
         texture.just_bind();

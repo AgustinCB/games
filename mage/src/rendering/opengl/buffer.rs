@@ -43,7 +43,7 @@ pub enum BufferType {
 
 impl Buffer {
     pub fn new(buffer_type: BufferType) -> Buffer {
-        let mut buffer = 0 as gl::types::GLuint;
+        let mut buffer = 0u32;
         gl_function!(GenBuffers(1, &mut buffer));
         Buffer(buffer, buffer_type as _)
     }
@@ -51,7 +51,7 @@ impl Buffer {
     pub fn multiple(buffer_types: Vec<BufferType>) -> Vec<Buffer> {
         let mut buffers = (0..buffer_types.len())
             .into_iter()
-            .map(|_| 0 as GLuint)
+            .map(|_| 0u32)
             .collect_vec();
         gl_function!(GenBuffers(buffer_types.len() as i32, buffers.as_mut_ptr()));
         buffers
@@ -109,7 +109,7 @@ impl Buffer {
 
 impl Drop for Buffer {
     fn drop(&mut self) {
-        gl_function!(DeleteBuffers(1, &mut self.0));
+        gl_function!(DeleteBuffers(1, &self.0));
     }
 }
 

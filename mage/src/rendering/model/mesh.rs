@@ -12,8 +12,7 @@ use crate::rendering::opengl::texture::{Texture, TextureParameter, TextureParame
 fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
     vectors
         .iter()
-        .map(|v| v.data.as_slice())
-        .flatten()
+        .flat_map(|v| v.data.as_slice())
         .cloned()
         .collect::<Vec<f32>>()
 }
@@ -46,7 +45,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn len(&self) -> usize {
+    pub fn len_vertices(&self) -> usize {
         if let Some(indices) = &self.indices {
             indices.len()
         } else {
@@ -105,7 +104,7 @@ impl Mesh {
         program.set_uniform_i1("material.n_diffuse", diffuse_index);
         program.set_uniform_i1("material.n_specular", specular_index);
         program.set_uniform_i1("material.n_height", height_index);
-        let shininess = self.shininess.clone().unwrap_or(64f32);
+        let shininess = self.shininess.unwrap_or(64f32);
         program.set_uniform_f1("material.shininess", shininess);
     }
 
@@ -181,13 +180,12 @@ impl Mesh {
         second: &[Matrix<f32, V, U1, ArrayStorage<f32, C1, 1>>],
     ) -> Vec<f32> {
         multizip((self.vertices.iter(), first, second))
-            .map(|(v, n, t)| {
+            .flat_map(|(v, n, t)| {
                 let mut d = v.data.as_slice().to_vec();
                 d.extend(n.data.as_slice());
                 d.extend(t.data.as_slice());
                 d
             })
-            .flatten()
             .collect::<Vec<f32>>()
     }
 
@@ -198,14 +196,13 @@ impl Mesh {
         third: &[Matrix<f32, W, U1, ArrayStorage<f32, C2, 1>>],
     ) -> Vec<f32> {
         multizip((self.vertices.iter(), first, second, third))
-            .map(|(v, f, s, t)| {
+            .flat_map(|(v, f, s, t)| {
                 let mut d = v.data.as_slice().to_vec();
                 d.extend(f.data.as_slice());
                 d.extend(s.data.as_slice());
                 d.extend(t.data.as_slice());
                 d
             })
-            .flatten()
             .collect::<Vec<f32>>()
     }
 
@@ -226,7 +223,7 @@ impl Mesh {
         forth: &[Matrix<f32, Y, U1, ArrayStorage<f32, C3, 1>>],
     ) -> Vec<f32> {
         multizip((self.vertices.iter(), first, second, third, forth))
-            .map(|(v, f, s, t, ff)| {
+            .flat_map(|(v, f, s, t, ff)| {
                 let mut d = v.data.as_slice().to_vec();
                 d.extend(f.data.as_slice());
                 d.extend(s.data.as_slice());
@@ -234,7 +231,6 @@ impl Mesh {
                 d.extend(ff.data.as_slice());
                 d
             })
-            .flatten()
             .collect::<Vec<f32>>()
     }
 
@@ -245,12 +241,11 @@ impl Mesh {
         self.vertices
             .iter()
             .zip(other)
-            .map(|(v, n)| {
+            .flat_map(|(v, n)| {
                 let mut d = v.data.as_slice().to_vec();
                 d.extend(n.data.as_slice());
                 d
             })
-            .flatten()
             .collect::<Vec<f32>>()
     }
 }

@@ -28,8 +28,9 @@ pub enum DataType {
 pub struct VertexArray(gl::types::GLuint);
 
 impl VertexArray {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> VertexArray {
-        let mut vertex_array = 0 as gl::types::GLuint;
+        let mut vertex_array = 0u32;
         gl_function!(GenVertexArrays(1, &mut vertex_array));
         VertexArray(vertex_array)
     }
@@ -39,7 +40,7 @@ impl VertexArray {
         gl_function!(GenVertexArrays(S as i32, vertex_arrays.as_mut_ptr()));
         vertex_arrays
             .into_iter()
-            .map(|v| VertexArray(v))
+            .map(VertexArray)
             .collect_vec()
     }
 
@@ -87,7 +88,7 @@ impl VertexArray {
 
 impl Drop for VertexArray {
     fn drop(&mut self) {
-        gl_function!(DeleteVertexArrays(1, &mut self.0))
+        gl_function!(DeleteVertexArrays(1, &self.0))
     }
 }
 

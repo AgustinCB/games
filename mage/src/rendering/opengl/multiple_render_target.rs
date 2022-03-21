@@ -69,7 +69,7 @@ impl MultipleRenderTarget {
         height: u32,
         formats: &[TextureFormat],
     ) -> MultipleRenderTarget {
-        let mut frame_buffer = 0 as gl::types::GLuint;
+        let mut frame_buffer = 0u32;
         gl_function!(GenFramebuffers(1, &mut frame_buffer));
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
 

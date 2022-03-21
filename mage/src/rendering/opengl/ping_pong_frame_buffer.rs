@@ -24,9 +24,9 @@ impl PingPongFrameBuffer {
         let mut textures = vec![];
         gl_function!(GenFramebuffers(2, ping_pong_fbs.as_mut_ptr()));
 
-        for i in 0..2 {
+        for &fb in ping_pong_fbs.iter().take(2) {
             let texture = Texture::new(TextureDimension::Texture2D);
-            gl_function!(BindFramebuffer(gl::FRAMEBUFFER, ping_pong_fbs[i]));
+            gl_function!(BindFramebuffer(gl::FRAMEBUFFER, fb));
             texture.just_bind();
             texture.allocate_space(width as u32, height as u32, format);
             texture.set_parameter(

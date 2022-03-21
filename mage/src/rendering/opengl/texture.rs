@@ -102,7 +102,7 @@ impl Texture {
     }
 
     pub fn new(texture_type: TextureDimension) -> Texture {
-        let mut texture = 0 as gl::types::GLuint;
+        let mut texture = 0u32;
         gl_function!(GenTextures(1, &mut texture));
         Texture(texture, texture_type)
     }

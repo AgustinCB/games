@@ -13,6 +13,7 @@ pub struct TextureLoader {
 }
 
 impl TextureLoader {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> TextureLoader {
         TextureLoader {
             textures: HashMap::new(),
