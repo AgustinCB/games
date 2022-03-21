@@ -5,8 +5,8 @@ use nalgebra::Vector4;
 use russimp::texture::TextureType;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::video::GLProfile;
 
+use mage::core::window::Window;
 use mage::MageError;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource};
 use mage::rendering::model::plane::vertical_plane;
@@ -56,25 +56,7 @@ fn load_texture(texture_info: TextureInfo) -> Result<Arc<Texture>, MageError> {
 
 pub fn main() {
     env_logger::init();
-    let sdl_context = sdl2::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-    let attrs = video_subsystem.gl_attr();
-
-    attrs.set_context_major_version(4);
-    attrs.set_context_minor_version(1);
-    attrs.set_context_profile(GLProfile::Core);
-    #[cfg(target_os = "macos")]
-        attrs.set_context_flags().forward_compatible().set();
-
-    let window = video_subsystem
-        .window("Opengl abstractions", 800, 600)
-        .position_centered()
-        .opengl()
-        .build()
-        .unwrap();
-    let _opengl = window.gl_create_context().unwrap();
-    gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
-    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut window = Window::new().unwrap();
 
     let program = Program::new(
         Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
@@ -124,7 +106,7 @@ pub fn main() {
 
     set_clear_color(Vector4::new(0.3, 0.3, 0.5, 1.0));
     'game_loop: loop {
-        for event in event_pump.poll_iter() {
+        for event in window.poll_events() {
             match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
@@ -139,6 +121,6 @@ pub fn main() {
         program.use_program();
         vertex_array.bind();
         draw(DrawingMode::Triangles, 6, OpenGlType::UnsignedInt);
-        window.gl_swap_window();
+        window.swap_buffers();
     }
 }

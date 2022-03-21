@@ -14,10 +14,7 @@ impl RenderBuffer {
     pub fn multiple<const S: usize>() -> Vec<RenderBuffer> {
         let mut render_buffers = [0; S];
         gl_function!(GenRenderbuffers(S as i32, render_buffers.as_mut_ptr()));
-        render_buffers
-            .into_iter()
-            .map(RenderBuffer)
-            .collect_vec()
+        render_buffers.into_iter().map(RenderBuffer).collect_vec()
     }
 
     pub fn bind(&self) {

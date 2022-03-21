@@ -38,10 +38,7 @@ impl VertexArray {
     pub fn multiple<const S: usize>() -> Vec<VertexArray> {
         let mut vertex_arrays = [0; S];
         gl_function!(GenVertexArrays(S as i32, vertex_arrays.as_mut_ptr()));
-        vertex_arrays
-            .into_iter()
-            .map(VertexArray)
-            .collect_vec()
+        vertex_arrays.into_iter().map(VertexArray).collect_vec()
     }
 
     pub fn bind(&self) {
