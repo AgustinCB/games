@@ -92,3 +92,5 @@ impl Drop for VertexArray {
         gl_function!(DeleteVertexArrays(1, &mut self.0))
     }
 }
+
+impl ! Sync for VertexArray {}

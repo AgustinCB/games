@@ -83,3 +83,5 @@ impl Drop for MultipleRenderTarget {
         gl_function!(DeleteFramebuffers(1, &self.resource));
     }
 }
+
+impl ! Sync for MultipleRenderTarget {}

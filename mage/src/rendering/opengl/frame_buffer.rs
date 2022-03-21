@@ -191,3 +191,5 @@ impl Drop for FrameBuffer {
         gl_function!(DeleteFramebuffers(1, &self.resource));
     }
 }
+
+impl ! Sync for FrameBuffer {}

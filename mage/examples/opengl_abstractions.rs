@@ -1,15 +1,22 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use nalgebra::Vector4;
+use russimp::texture::TextureType;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::video::GLProfile;
 
+use mage::MageError;
+use mage::rendering::model::mesh::{TextureInfo, TextureSource};
 use mage::rendering::model::quad::quad;
 use mage::rendering::opengl::{clear, draw, DrawingBuffer, DrawingMode, OpenGlType, set_clear_color};
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::{Shader, ShaderType};
-use mage::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat, TextureParameter, TextureParameterValue};
+use mage::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::vertex_array::{DataType, VertexArray};
+use mage::resources::texture::TextureLoader;
 
 const VERTEX_SHADER: &'static str = "#version 330 core
 layout (location = 0) in vec3 aPos;
@@ -40,7 +47,13 @@ void main()
     FragColor = texture(texture1, TexCoord) * vec4(ourColor, 1);
 }";
 
+fn load_texture(texture_info: TextureInfo) -> Result<Arc<Texture>, MageError> {
+    let mut loader = TextureLoader::new();
+    loader.load_texture_2d(&texture_info)
+}
+
 pub fn main() {
+    env_logger::init();
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let attrs = video_subsystem.gl_attr();
@@ -77,17 +90,17 @@ pub fn main() {
     VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 1, 8, 3, 3, false);
     VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 2, 8, 2, 6, false);
 
-    let texture = Texture::new(TextureDimension::Texture2D);
-    texture.bind(0);
-    texture.set_parameter(TextureParameter::TextureWrapS, TextureParameterValue::Repeat);
-    texture.set_parameter(TextureParameter::TextureWrapT, TextureParameterValue::Repeat);
-    texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::LinearMipmapLinear);
-    texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Linear);
-    {
-        let data = include_bytes!("./resources/container.raw");
-        texture.set_image_2d(512, 512, data, TextureFormat::UnsignedByte);
-        texture.generate_mipmap();
-    }
+    let texture = load_texture(TextureInfo {
+        id: 0,
+        texture_type: TextureType::Diffuse,
+        source: TextureSource::File(format!("{}/examples/resources/container.jpg", env!("CARGO_MANIFEST_DIR"))),
+        parameters: HashMap::from([
+            (TextureParameter::TextureWrapS, TextureParameterValue::Repeat),
+            (TextureParameter::TextureWrapT, TextureParameterValue::Repeat),
+            (TextureParameter::TextureMinFilter, TextureParameterValue::LinearMipmapLinear),
+            (TextureParameter::TextureMagFilter, TextureParameterValue::Linear),
+        ]),
+    }).unwrap();
 
     set_clear_color(Vector4::new(0.3, 0.3, 0.5, 1.0));
     'game_loop: loop {

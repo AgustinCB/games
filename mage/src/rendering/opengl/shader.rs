@@ -68,3 +68,5 @@ impl Drop for Shader {
         gl_function!(DeleteShader(self.0));
     }
 }
+
+impl ! Sync for Shader {}

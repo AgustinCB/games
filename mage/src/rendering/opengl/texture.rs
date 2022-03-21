@@ -2,7 +2,9 @@ use std::mem::transmute;
 use std::ptr;
 
 use gl;
+use image::ColorType;
 use itertools::Itertools;
+use thiserror::Error;
 
 #[repr(u32)]
 #[derive(Clone, Copy, Debug)]
@@ -15,7 +17,7 @@ pub enum TextureDimension {
 }
 
 #[repr(u32)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum TextureParameter {
     DepthStencilTextureMode = gl::DEPTH_STENCIL_TEXTURE_MODE,
     TextureCompareFunc = gl::TEXTURE_COMPARE_FUNC,
@@ -28,7 +30,7 @@ pub enum TextureParameter {
 }
 
 #[repr(u32)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum TextureParameterValue {
     DepthComponent = gl::DEPTH_COMPONENT,
     StencilIndex = gl::STENCIL_INDEX,
@@ -62,6 +64,24 @@ pub enum TextureFormat {
     UnsignedByteWithAlpha,
     Grey,
     Depth,
+}
+
+#[derive(Clone, Debug, Error)]
+pub enum TextureError {
+    #[error("Unsupported color type {:?}", 0)]
+    UnsupportedColorType(ColorType),
+}
+
+impl TryFrom<ColorType> for TextureFormat {
+    type Error = TextureError;
+
+    fn try_from(value: ColorType) -> Result<Self, Self::Error> {
+        match value {
+            ColorType::Rgb8 => Ok(TextureFormat::UnsignedByte),
+            ColorType::Rgba8 => Ok(TextureFormat::UnsignedByteWithAlpha),
+            _ => Err(TextureError::UnsupportedColorType(value))
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -227,3 +247,5 @@ impl Drop for Texture {
         gl_function!(DeleteTextures(1, &self.0));
     }
 }
+
+impl ! Sync for Texture {}

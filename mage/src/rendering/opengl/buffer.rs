@@ -1,3 +1,4 @@
+use std::marker::Sync;
 use std::mem::{size_of, transmute};
 use std::ptr;
 
@@ -98,3 +99,5 @@ impl Drop for Buffer {
         gl_function!(DeleteBuffers(1, &mut self.0));
     }
 }
+
+impl ! Sync for Buffer {}

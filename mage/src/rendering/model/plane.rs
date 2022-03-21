@@ -23,7 +23,7 @@ const TEXTURE_COORDINATES: [Vector2<f32>; 4] = [
     Vector2::new(0f32, 1f32),
 ];
 
-pub fn quad(textures: Vec<TextureInfo>) -> Mesh {
+pub fn plane(textures: Vec<TextureInfo>) -> Mesh {
     Mesh {
         bitangents: None,
         drawing_mode: DrawingMode::Triangles,

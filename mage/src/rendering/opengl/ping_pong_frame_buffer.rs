@@ -62,3 +62,5 @@ impl Drop for PingPongFrameBuffer {
         gl_function!(DeleteFramebuffers(2, fbs.as_ptr()));
     }
 }
+
+impl ! Sync for PingPongFrameBuffer {}

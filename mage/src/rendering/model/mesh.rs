@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use itertools::multizip;
@@ -6,7 +7,7 @@ use russimp::texture::TextureType;
 
 use crate::rendering::opengl::DrawingMode;
 use crate::rendering::opengl::program::Program;
-use crate::rendering::opengl::texture::Texture;
+use crate::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 
 fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
     vectors.iter()
@@ -16,10 +17,10 @@ fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
         .collect::<Vec<f32>>()
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum TextureSource {
     File(String),
-    Color(Vector3<f32>),
+    Color(Vector3<u32>),
 }
 
 #[derive(Clone, Debug)]
@@ -27,6 +28,7 @@ pub struct TextureInfo {
     pub id: usize,
     pub texture_type: TextureType,
     pub source: TextureSource,
+    pub parameters: HashMap<TextureParameter, TextureParameterValue>,
 }
 
 #[derive(Clone, Debug)]

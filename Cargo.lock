@@ -546,6 +546,7 @@ dependencies = [
 name = "mage"
 version = "0.1.0"
 dependencies = [
+ "env_logger",
  "gl",
  "hecs",
  "image",

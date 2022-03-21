@@ -103,7 +103,7 @@ impl Program {
         gl_function!(Uniform1i(location, value));
     }
 
-    pub fn set_uniform_matrix4(&self, uniform: &str, matrix: &Matrix4<f32>) {
+    pub fn set_uniform_matrix4(&self, uniform: &str, matrix: Matrix4<f32>) {
         let location = self.find_uniform(uniform);
         gl_function!(UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr()));
     }
@@ -143,3 +143,5 @@ impl Drop for Program {
         gl_function!(DeleteProgram(self.resource));
     }
 }
+
+impl ! Sync for Program {}
