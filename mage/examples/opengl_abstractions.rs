@@ -9,7 +9,7 @@ use sdl2::video::GLProfile;
 
 use mage::MageError;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource};
-use mage::rendering::model::quad::quad;
+use mage::rendering::model::plane::vertical_plane;
 use mage::rendering::opengl::{
     clear, draw, DrawingBuffer, DrawingMode, OpenGlType, set_clear_color,
 };
@@ -81,7 +81,7 @@ pub fn main() {
         Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
     )
         .unwrap();
-    let quad = quad(vec![]);
+    let quad = vertical_plane(vec![]);
     let vertex_array = VertexArray::new();
     let array_buffer = Buffer::new(BufferType::Array);
     let element_buffer = Buffer::new(BufferType::ElementArray);
