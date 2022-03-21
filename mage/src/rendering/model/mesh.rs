@@ -10,7 +10,8 @@ use crate::rendering::opengl::program::Program;
 use crate::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 
 fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
-    vectors.iter()
+    vectors
+        .iter()
         .map(|v| v.data.as_slice())
         .flatten()
         .cloned()
@@ -95,7 +96,10 @@ impl Mesh {
                 } else {
                     panic!("Can't happen");
                 };
-                program.set_uniform_i1(&format!("material.{}{}", texture_type, texture_index), info.id as i32);
+                program.set_uniform_i1(
+                    &format!("material.{}{}", texture_type, texture_index),
+                    info.id as i32,
+                );
             }
         }
         program.set_uniform_i1("material.n_diffuse", diffuse_index);
@@ -106,22 +110,19 @@ impl Mesh {
     }
 
     pub fn flattened_data(&self) -> Vec<f32> {
-        match (&self.normals, &self.texture_coordinates, &self.tangents, &self.bitangents) {
-            (None, None, None, None) => {
-                self.get_flattened_vertices()
-            }
-            (Some(normals), None, None, None) => {
-                self.flatten_with_vertices(normals)
-            }
+        match (
+            &self.normals,
+            &self.texture_coordinates,
+            &self.tangents,
+            &self.bitangents,
+        ) {
+            (None, None, None, None) => self.get_flattened_vertices(),
+            (Some(normals), None, None, None) => self.flatten_with_vertices(normals),
             (None, Some(texture_coordinates), None, None) => {
                 self.flatten_with_vertices(texture_coordinates)
             }
-            (None, None, Some(tangents), None) => {
-                self.flatten_with_vertices(tangents)
-            }
-            (None, None, None, Some(bitangents)) => {
-                self.flatten_with_vertices(bitangents)
-            }
+            (None, None, Some(tangents), None) => self.flatten_with_vertices(tangents),
+            (None, None, None, Some(bitangents)) => self.flatten_with_vertices(bitangents),
             (Some(normals), Some(texture_coordinates), None, None) => {
                 self.flatten_two_with_vertices(normals, texture_coordinates)
             }
@@ -159,26 +160,14 @@ impl Mesh {
     }
 
     pub fn vertex_info_size(&self) -> usize {
-        let normals_size = if self.normals.is_some() {
-            3
-        } else {
-            0
-        };
+        let normals_size = if self.normals.is_some() { 3 } else { 0 };
         let textures_size = if self.texture_coordinates.is_some() {
             2
         } else {
             0
         };
-        let tangents_size = if self.tangents.is_some() {
-            3
-        } else {
-            0
-        };
-        let bitangents_size = if self.bitangents.is_some() {
-            3
-        } else {
-            0
-        };
+        let tangents_size = if self.tangents.is_some() { 3 } else { 0 };
+        let bitangents_size = if self.bitangents.is_some() { 3 } else { 0 };
         3 + normals_size + textures_size + tangents_size + bitangents_size
     }
 
@@ -220,7 +209,16 @@ impl Mesh {
             .collect::<Vec<f32>>()
     }
 
-    fn flatten_four_with_vertices<U, V, W, Y, const C: usize, const C1: usize, const C2: usize, const C3: usize>(
+    fn flatten_four_with_vertices<
+        U,
+        V,
+        W,
+        Y,
+        const C: usize,
+        const C1: usize,
+        const C2: usize,
+        const C3: usize,
+    >(
         &self,
         first: &[Matrix<f32, U, U1, ArrayStorage<f32, C, 1>>],
         second: &[Matrix<f32, V, U1, ArrayStorage<f32, C1, 1>>],
@@ -244,7 +242,8 @@ impl Mesh {
         &self,
         other: &[Matrix<f32, D, U1, ArrayStorage<f32, S, 1>>],
     ) -> Vec<f32> {
-        self.vertices.iter()
+        self.vertices
+            .iter()
             .zip(other)
             .map(|(v, n)| {
                 let mut d = v.data.as_slice().to_vec();

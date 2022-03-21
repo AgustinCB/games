@@ -64,7 +64,11 @@ impl Program {
         })
     }
 
-    pub fn with_geometry(vertex_shader: Shader, fragment_shader: Shader, geometry_shader: Shader) -> Result<Program, MageError> {
+    pub fn with_geometry(
+        vertex_shader: Shader,
+        fragment_shader: Shader,
+        geometry_shader: Shader,
+    ) -> Result<Program, MageError> {
         let resource = gl_function!(CreateProgram());
         gl_function!(AttachShader(resource, vertex_shader.0));
         gl_function!(AttachShader(resource, geometry_shader.0));
@@ -89,13 +93,22 @@ impl Program {
     pub fn set_uniform_v4(&self, uniform: &str, vector: Vector4<f32>) {
         let location = self.find_uniform(uniform);
         gl_function!(Uniform4f(
-            location, *vector.get(0).unwrap(), *vector.get(1).unwrap(), *vector.get(2).unwrap(), *vector.get(3).unwrap()
+            location,
+            *vector.get(0).unwrap(),
+            *vector.get(1).unwrap(),
+            *vector.get(2).unwrap(),
+            *vector.get(3).unwrap()
         ));
     }
 
     pub fn set_uniform_v3(&self, uniform: &str, vector: Vector3<f32>) {
         let location = self.find_uniform(uniform);
-        gl_function!(Uniform3f(location, vector.data.0[0][0], vector.data.0[0][1], vector.data.0[0][2]));
+        gl_function!(Uniform3f(
+            location,
+            vector.data.0[0][0],
+            vector.data.0[0][1],
+            vector.data.0[0][2]
+        ));
     }
 
     pub fn set_uniform_i1(&self, uniform: &str, value: i32) {
@@ -110,8 +123,15 @@ impl Program {
 
     pub fn bind_uniform_block(&self, uniform: &str, binding_point: usize) {
         let c_string = CString::new(uniform).unwrap();
-        let block_index = gl_function!(GetUniformBlockIndex(self.resource, transmute(c_string.as_ptr())));
-        gl_function!(UniformBlockBinding(self.resource, block_index, binding_point as u32));
+        let block_index = gl_function!(GetUniformBlockIndex(
+            self.resource,
+            transmute(c_string.as_ptr())
+        ));
+        gl_function!(UniformBlockBinding(
+            self.resource,
+            block_index,
+            binding_point as u32
+        ));
     }
 
     fn find_uniform(&self, uniform: &str) -> gl::types::GLint {
@@ -124,10 +144,8 @@ impl Program {
             Some(uniform) => *uniform,
             None => {
                 let c_str = CString::new(uniform).unwrap();
-                let location = gl_function!(GetUniformLocation(
-                    self.resource,
-                    transmute(c_str.as_ptr())
-                ));
+                let location =
+                    gl_function!(GetUniformLocation(self.resource, transmute(c_str.as_ptr())));
                 if location == -1 {
                     warn!("Uniform {} does not exist", uniform);
                 }

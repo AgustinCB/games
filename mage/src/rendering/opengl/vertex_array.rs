@@ -37,19 +37,17 @@ impl VertexArray {
     pub fn multiple<const S: usize>() -> Vec<VertexArray> {
         let mut vertex_arrays = [0; S];
         gl_function!(GenVertexArrays(S as i32, vertex_arrays.as_mut_ptr()));
-        vertex_arrays.into_iter().map(|v| VertexArray(v)).collect_vec()
+        vertex_arrays
+            .into_iter()
+            .map(|v| VertexArray(v))
+            .collect_vec()
     }
 
     pub fn bind(&self) {
         gl_function!(BindVertexArray(self.0));
     }
 
-    pub fn set_vertex_attrib<T>(
-        gl_type: DataType,
-        attribute: u32,
-        size: u32,
-        normalized: bool,
-    ) {
+    pub fn set_vertex_attrib<T>(gl_type: DataType, attribute: u32, size: u32, normalized: bool) {
         let normalized = if normalized { gl::TRUE } else { gl::FALSE };
         gl_function!(EnableVertexAttribArray(attribute));
         gl_function!(VertexAttribPointer(

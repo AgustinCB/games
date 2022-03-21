@@ -1,7 +1,9 @@
 use log::error;
 
 use crate::rendering::opengl::render_buffer::RenderBuffer;
-use crate::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat, TextureParameter, TextureParameterValue};
+use crate::rendering::opengl::texture::{
+    Texture, TextureDimension, TextureFormat, TextureParameter, TextureParameterValue,
+};
 
 #[derive(Debug)]
 pub struct FrameBuffer {
@@ -23,17 +25,39 @@ impl FrameBuffer {
         let texture = Texture::new(TextureDimension::Texture2D);
         texture.just_bind();
         texture.allocate_space(width, height, format);
-        texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::Linear);
-        texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Linear);
+        texture.set_parameter(
+            TextureParameter::TextureMinFilter,
+            TextureParameterValue::Linear,
+        );
+        texture.set_parameter(
+            TextureParameter::TextureMagFilter,
+            TextureParameterValue::Linear,
+        );
         texture.unbind();
 
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2D as u32, texture.0, 0));
+        gl_function!(FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            TextureDimension::Texture2D as u32,
+            texture.0,
+            0
+        ));
 
         let render_buffer = RenderBuffer::new();
         render_buffer.bind();
-        gl_function!(RenderbufferStorage(gl::RENDERBUFFER, gl::DEPTH24_STENCIL8, width as _, height as _));
+        gl_function!(RenderbufferStorage(
+            gl::RENDERBUFFER,
+            gl::DEPTH24_STENCIL8,
+            width as _,
+            height as _
+        ));
         RenderBuffer::unbind();
-        gl_function!(FramebufferRenderbuffer(gl::FRAMEBUFFER, gl::DEPTH_STENCIL_ATTACHMENT, gl::RENDERBUFFER, render_buffer.0));
+        gl_function!(FramebufferRenderbuffer(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_STENCIL_ATTACHMENT,
+            gl::RENDERBUFFER,
+            render_buffer.0
+        ));
 
         let status = gl_function!(CheckFramebufferStatus(gl::FRAMEBUFFER));
         if status != gl::FRAMEBUFFER_COMPLETE {
@@ -55,9 +79,21 @@ impl FrameBuffer {
         let texture = Texture::new(TextureDimension::Texture2D);
         texture.just_bind();
         texture.allocate_space(width, height, format);
-        texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::Nearest);
-        texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Nearest);
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2D as u32, texture.0, 0));
+        texture.set_parameter(
+            TextureParameter::TextureMinFilter,
+            TextureParameterValue::Nearest,
+        );
+        texture.set_parameter(
+            TextureParameter::TextureMagFilter,
+            TextureParameterValue::Nearest,
+        );
+        gl_function!(FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            TextureDimension::Texture2D as u32,
+            texture.0,
+            0
+        ));
 
         let status = gl_function!(CheckFramebufferStatus(gl::FRAMEBUFFER));
         if status != gl::FRAMEBUFFER_COMPLETE {
@@ -79,9 +115,21 @@ impl FrameBuffer {
         let texture = Texture::new(TextureDimension::Texture2D);
         texture.just_bind();
         texture.allocate_space(width, height, TextureFormat::UnsignedByte);
-        texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::Linear);
-        texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Linear);
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2D as u32, texture.0, 0));
+        texture.set_parameter(
+            TextureParameter::TextureMinFilter,
+            TextureParameterValue::Linear,
+        );
+        texture.set_parameter(
+            TextureParameter::TextureMagFilter,
+            TextureParameterValue::Linear,
+        );
+        gl_function!(FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            TextureDimension::Texture2D as u32,
+            texture.0,
+            0
+        ));
 
         let status = gl_function!(CheckFramebufferStatus(gl::FRAMEBUFFER));
         if status != gl::FRAMEBUFFER_COMPLETE {
@@ -102,16 +150,40 @@ impl FrameBuffer {
 
         let texture = Texture::new(TextureDimension::Texture2DMultisample);
         texture.just_bind();
-        gl_function!(TexImage2DMultisample(TextureDimension::Texture2DMultisample as _, 4, gl::RGB, width as i32, height as i32, gl::TRUE));
+        gl_function!(TexImage2DMultisample(
+            TextureDimension::Texture2DMultisample as _,
+            4,
+            gl::RGB,
+            width as i32,
+            height as i32,
+            gl::TRUE
+        ));
         texture.unbind();
 
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, TextureDimension::Texture2DMultisample as u32, texture.0, 0));
+        gl_function!(FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::COLOR_ATTACHMENT0,
+            TextureDimension::Texture2DMultisample as u32,
+            texture.0,
+            0
+        ));
 
         let render_buffer = RenderBuffer::new();
         render_buffer.bind();
-        gl_function!(RenderbufferStorageMultisample(gl::RENDERBUFFER, 4, gl::DEPTH24_STENCIL8, width as _, height as _));
+        gl_function!(RenderbufferStorageMultisample(
+            gl::RENDERBUFFER,
+            4,
+            gl::DEPTH24_STENCIL8,
+            width as _,
+            height as _
+        ));
         RenderBuffer::unbind();
-        gl_function!(FramebufferRenderbuffer(gl::FRAMEBUFFER, gl::DEPTH_STENCIL_ATTACHMENT, gl::RENDERBUFFER, render_buffer.0));
+        gl_function!(FramebufferRenderbuffer(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_STENCIL_ATTACHMENT,
+            gl::RENDERBUFFER,
+            render_buffer.0
+        ));
 
         let status = gl_function!(CheckFramebufferStatus(gl::FRAMEBUFFER));
         if status != gl::FRAMEBUFFER_COMPLETE {
@@ -132,14 +204,36 @@ impl FrameBuffer {
         let texture = Texture::new(TextureDimension::Texture2D);
         texture.just_bind();
         texture.allocate_space(width, height, TextureFormat::Depth);
-        texture.set_parameter(TextureParameter::TextureMinFilter, TextureParameterValue::Nearest);
-        texture.set_parameter(TextureParameter::TextureMagFilter, TextureParameterValue::Nearest);
-        texture.set_parameter(TextureParameter::TextureWrapS, TextureParameterValue::ClampToBorder);
-        texture.set_parameter(TextureParameter::TextureWrapT, TextureParameterValue::ClampToBorder);
-        gl_function!(TexParameterfv(gl::TEXTURE_2D, gl::TEXTURE_BORDER_COLOR, [1f32, 1f32, 1f32, 1f32].as_ptr()));
+        texture.set_parameter(
+            TextureParameter::TextureMinFilter,
+            TextureParameterValue::Nearest,
+        );
+        texture.set_parameter(
+            TextureParameter::TextureMagFilter,
+            TextureParameterValue::Nearest,
+        );
+        texture.set_parameter(
+            TextureParameter::TextureWrapS,
+            TextureParameterValue::ClampToBorder,
+        );
+        texture.set_parameter(
+            TextureParameter::TextureWrapT,
+            TextureParameterValue::ClampToBorder,
+        );
+        gl_function!(TexParameterfv(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_BORDER_COLOR,
+            [1f32, 1f32, 1f32, 1f32].as_ptr()
+        ));
 
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
-        gl_function!(FramebufferTexture2D(gl::FRAMEBUFFER, gl::DEPTH_ATTACHMENT, texture.1 as _, texture.0, 0));
+        gl_function!(FramebufferTexture2D(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_ATTACHMENT,
+            texture.1 as _,
+            texture.0,
+            0
+        ));
         gl_function!(DrawBuffer(gl::NONE));
         gl_function!(ReadBuffer(gl::NONE));
         FrameBuffer::unbind();
@@ -157,7 +251,12 @@ impl FrameBuffer {
 
         texture.just_bind();
         gl_function!(BindFramebuffer(gl::FRAMEBUFFER, frame_buffer));
-        gl_function!(FramebufferTexture(gl::FRAMEBUFFER, gl::DEPTH_ATTACHMENT, texture.0, 0));
+        gl_function!(FramebufferTexture(
+            gl::FRAMEBUFFER,
+            gl::DEPTH_ATTACHMENT,
+            texture.0,
+            0
+        ));
         gl_function!(DrawBuffer(gl::NONE));
         gl_function!(ReadBuffer(gl::NONE));
         FrameBuffer::unbind();

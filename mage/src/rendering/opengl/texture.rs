@@ -79,7 +79,7 @@ impl TryFrom<ColorType> for TextureFormat {
         match value {
             ColorType::Rgb8 => Ok(TextureFormat::UnsignedByte),
             ColorType::Rgba8 => Ok(TextureFormat::UnsignedByteWithAlpha),
-            _ => Err(TextureError::UnsupportedColorType(value))
+            _ => Err(TextureError::UnsupportedColorType(value)),
         }
     }
 }
@@ -90,8 +90,12 @@ pub struct Texture(pub(crate) gl::types::GLuint, pub(crate) TextureDimension);
 impl Texture {
     pub fn multiple(texture_types: Vec<TextureDimension>) -> Vec<Texture> {
         let mut texture_resources = [0].repeat(texture_types.len());
-        gl_function!(GenTextures(texture_types.len() as i32, texture_resources.as_mut_ptr()));
-        texture_resources.into_iter()
+        gl_function!(GenTextures(
+            texture_types.len() as i32,
+            texture_resources.as_mut_ptr()
+        ));
+        texture_resources
+            .into_iter()
             .zip(texture_types)
             .map(|(r, t)| Texture(r, t))
             .collect_vec()
@@ -166,28 +170,32 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 transmute(&(data[0]) as *const T)
             )),
-            (TextureDimension::Texture2D, TextureFormat::UnsignedByteWithAlpha) => gl_function!(TexImage2D(
-                self.1 as _,
-                0,
-                gl::RGBA as _,
-                width as _,
-                height as _,
-                0,
-                gl::RGBA as _,
-                gl::UNSIGNED_BYTE,
-                transmute(&(data[0]) as *const T)
-            )),
-            (TextureDimension::Texture2D, TextureFormat::FloatingPoint) => gl_function!(TexImage2D(
-                self.1 as _,
-                0,
-                gl::RGBA16F as _,
-                width as _,
-                height as _,
-                0,
-                gl::RGBA as _,
-                gl::FLOAT,
-                transmute(&(data[0]) as *const T)
-            )),
+            (TextureDimension::Texture2D, TextureFormat::UnsignedByteWithAlpha) => {
+                gl_function!(TexImage2D(
+                    self.1 as _,
+                    0,
+                    gl::RGBA as _,
+                    width as _,
+                    height as _,
+                    0,
+                    gl::RGBA as _,
+                    gl::UNSIGNED_BYTE,
+                    transmute(&(data[0]) as *const T)
+                ))
+            }
+            (TextureDimension::Texture2D, TextureFormat::FloatingPoint) => {
+                gl_function!(TexImage2D(
+                    self.1 as _,
+                    0,
+                    gl::RGBA16F as _,
+                    width as _,
+                    height as _,
+                    0,
+                    gl::RGBA as _,
+                    gl::FLOAT,
+                    transmute(&(data[0]) as *const T)
+                ))
+            }
             _ => unimplemented!(),
         }
     }
@@ -205,33 +213,53 @@ impl Texture {
                 gl::UNSIGNED_BYTE,
                 ptr::null(),
             )),
-            (TextureDimension::Texture2D, TextureFormat::UnsignedByteWithAlpha) => gl_function!(TexImage2D(
+            (TextureDimension::Texture2D, TextureFormat::UnsignedByteWithAlpha) => {
+                gl_function!(TexImage2D(
+                    self.1 as _,
+                    0,
+                    gl::RGBA as _,
+                    width as _,
+                    height as _,
+                    0,
+                    gl::RGBA as _,
+                    gl::UNSIGNED_BYTE,
+                    ptr::null(),
+                ))
+            }
+            (TextureDimension::Texture2D, TextureFormat::FloatingPoint) => {
+                gl_function!(TexImage2D(
+                    self.1 as _,
+                    0,
+                    gl::RGBA16F as _,
+                    width as _,
+                    height as _,
+                    0,
+                    gl::RGBA as _,
+                    gl::FLOAT,
+                    ptr::null(),
+                ))
+            }
+            (TextureDimension::Texture2D, TextureFormat::Grey) => gl_function!(TexImage2D(
                 self.1 as _,
                 0,
-                gl::RGBA as _,
+                gl::RED as _,
                 width as _,
                 height as _,
                 0,
-                gl::RGBA as _,
-                gl::UNSIGNED_BYTE,
-                ptr::null(),
-            )),
-            (TextureDimension::Texture2D, TextureFormat::FloatingPoint) => gl_function!(TexImage2D(
-                self.1 as _,
-                0,
-                gl::RGBA16F as _,
-                width as _,
-                height as _,
-                0,
-                gl::RGBA as _,
+                gl::RED as _,
                 gl::FLOAT,
                 ptr::null(),
             )),
-            (TextureDimension::Texture2D, TextureFormat::Grey) => gl_function!(TexImage2D(
-                self.1 as _, 0, gl::RED as _, width as _, height as _, 0, gl::RED as _, gl::FLOAT, ptr::null(),
-            )),
             (TextureDimension::Texture2D, TextureFormat::Depth) => gl_function!(TexImage2D(
-                self.1 as _, 0, gl::DEPTH_COMPONENT as _, width as _, height as _, 0, gl::DEPTH_COMPONENT as _, gl::FLOAT, ptr::null(),
+                self.1 as _,
+                0,
+                gl::DEPTH_COMPONENT as _,
+                width as _,
+                height as _,
+                0,
+                gl::DEPTH_COMPONENT as _,
+                gl::FLOAT,
+                ptr::null(),
             )),
             _ => unimplemented!(),
         }

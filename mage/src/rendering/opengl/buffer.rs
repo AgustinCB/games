@@ -49,9 +49,13 @@ impl Buffer {
     }
 
     pub fn multiple(buffer_types: Vec<BufferType>) -> Vec<Buffer> {
-        let mut buffers = (0..buffer_types.len()).into_iter().map(|_| 0 as GLuint).collect_vec();
+        let mut buffers = (0..buffer_types.len())
+            .into_iter()
+            .map(|_| 0 as GLuint)
+            .collect_vec();
         gl_function!(GenBuffers(buffer_types.len() as i32, buffers.as_mut_ptr()));
-        buffers.into_iter()
+        buffers
+            .into_iter()
             .zip(&buffer_types)
             .map(|(b, t)| Buffer(b, *t as _))
             .collect_vec()
@@ -68,7 +72,10 @@ impl Buffer {
 
     pub fn set_sub_data<T>(&self, from: usize, to: usize, data: &[T]) {
         gl_function!(BufferSubData(
-            self.1, (size_of::<T>() * from) as isize, (size_of::<T>() * to) as isize, transmute(&data[0]),
+            self.1,
+            (size_of::<T>() * from) as isize,
+            (size_of::<T>() * to) as isize,
+            transmute(&data[0]),
         ));
     }
 
@@ -82,7 +89,13 @@ impl Buffer {
     }
 
     pub fn link_to_binding_point(&self, binding_point: usize, from: usize, to: usize) {
-        gl_function!(BindBufferRange(self.1, binding_point as _, self.0, from as _, to as _));
+        gl_function!(BindBufferRange(
+            self.1,
+            binding_point as _,
+            self.0,
+            from as _,
+            to as _
+        ));
     }
 
     pub fn bind(&self) {

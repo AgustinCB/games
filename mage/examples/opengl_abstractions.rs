@@ -10,7 +10,9 @@ use sdl2::video::GLProfile;
 use mage::MageError;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource};
 use mage::rendering::model::quad::quad;
-use mage::rendering::opengl::{clear, draw, DrawingBuffer, DrawingMode, OpenGlType, set_clear_color};
+use mage::rendering::opengl::{
+    clear, draw, DrawingBuffer, DrawingMode, OpenGlType, set_clear_color,
+};
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::{Shader, ShaderType};
@@ -64,7 +66,8 @@ pub fn main() {
     #[cfg(target_os = "macos")]
         attrs.set_context_flags().forward_compatible().set();
 
-    let window = video_subsystem.window("Opengl abstractions", 800, 600)
+    let window = video_subsystem
+        .window("Opengl abstractions", 800, 600)
         .position_centered()
         .opengl()
         .build()
@@ -76,7 +79,8 @@ pub fn main() {
     let program = Program::new(
         Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
         Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
-    ).unwrap();
+    )
+        .unwrap();
     let quad = quad(vec![]);
     let vertex_array = VertexArray::new();
     let array_buffer = Buffer::new(BufferType::Array);
@@ -93,21 +97,40 @@ pub fn main() {
     let texture = load_texture(TextureInfo {
         id: 0,
         texture_type: TextureType::Diffuse,
-        source: TextureSource::File(format!("{}/examples/resources/container.jpg", env!("CARGO_MANIFEST_DIR"))),
+        source: TextureSource::File(format!(
+            "{}/examples/resources/container.jpg",
+            env!("CARGO_MANIFEST_DIR")
+        )),
         parameters: HashMap::from([
-            (TextureParameter::TextureWrapS, TextureParameterValue::Repeat),
-            (TextureParameter::TextureWrapT, TextureParameterValue::Repeat),
-            (TextureParameter::TextureMinFilter, TextureParameterValue::LinearMipmapLinear),
-            (TextureParameter::TextureMagFilter, TextureParameterValue::Linear),
+            (
+                TextureParameter::TextureWrapS,
+                TextureParameterValue::Repeat,
+            ),
+            (
+                TextureParameter::TextureWrapT,
+                TextureParameterValue::Repeat,
+            ),
+            (
+                TextureParameter::TextureMinFilter,
+                TextureParameterValue::LinearMipmapLinear,
+            ),
+            (
+                TextureParameter::TextureMagFilter,
+                TextureParameterValue::Linear,
+            ),
         ]),
-    }).unwrap();
+    })
+        .unwrap();
 
     set_clear_color(Vector4::new(0.3, 0.3, 0.5, 1.0));
     'game_loop: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } =>
-                    break 'game_loop,
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => break 'game_loop,
                 _ => {}
             }
         }

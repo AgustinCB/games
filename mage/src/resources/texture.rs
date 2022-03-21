@@ -27,7 +27,10 @@ impl TextureLoader {
         }
     }
 
-    pub fn load_texture_2d(&mut self, texture_info: &TextureInfo) -> Result<Arc<Texture>, MageError> {
+    pub fn load_texture_2d(
+        &mut self,
+        texture_info: &TextureInfo,
+    ) -> Result<Arc<Texture>, MageError> {
         if let Some(source) = self.textures.get(&texture_info.source) {
             Ok(source.clone())
         } else {
@@ -39,20 +42,27 @@ impl TextureLoader {
                     match TextureFormat::try_from(image.color()) {
                         Ok(format) => {
                             texture.set_image_2d(
-                                image.width() as u32, image.height() as u32, image.as_bytes(), format,
+                                image.width() as u32,
+                                image.height() as u32,
+                                image.as_bytes(),
+                                format,
                             );
                         }
                         Err(_) => {
                             let image = image.to_rgba8();
                             texture.set_image_2d(
-                                image.width() as u32, image.height() as u32, image.as_bytes(), TextureFormat::UnsignedByteWithAlpha,
+                                image.width() as u32,
+                                image.height() as u32,
+                                image.as_bytes(),
+                                TextureFormat::UnsignedByteWithAlpha,
                             );
                         }
                     };
                 }
                 TextureSource::Color(_color) => unimplemented!(),
             };
-            self.textures.insert(texture_info.source.clone(), texture.clone());
+            self.textures
+                .insert(texture_info.source.clone(), texture.clone());
             for (&k, &v) in &texture_info.parameters {
                 texture.set_parameter(k, v);
             }

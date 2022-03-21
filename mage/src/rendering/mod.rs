@@ -1,2 +1,2 @@
-pub mod opengl;
 pub mod model;
+pub mod opengl;
