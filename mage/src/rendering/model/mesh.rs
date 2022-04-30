@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use itertools::multizip;
-use nalgebra::{ArrayStorage, Matrix, U1, Vector2, Vector3};
+use nalgebra::{ArrayStorage, Matrix, Vector2, Vector3, U1};
 use russimp::texture::TextureType;
 
-use crate::rendering::opengl::DrawingMode;
 use crate::rendering::opengl::program::Program;
 use crate::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
+use crate::rendering::opengl::DrawingMode;
 
 fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
     vectors

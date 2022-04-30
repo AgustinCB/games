@@ -89,4 +89,4 @@ impl Drop for VertexArray {
     }
 }
 
-impl ! Sync for VertexArray {}
+impl !Sync for VertexArray {}

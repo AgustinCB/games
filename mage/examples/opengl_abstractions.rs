@@ -1,24 +1,24 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use hecs::World;
 use nalgebra::Vector4;
 use russimp::texture::TextureType;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
 
-use mage::core::window::Window;
-use mage::MageError;
+use mage::core::game::Game;
+use mage::core::system::System;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource};
 use mage::rendering::model::plane::vertical_plane;
-use mage::rendering::opengl::{
-    clear, draw, DrawingBuffer, DrawingMode, OpenGlType, set_clear_color,
-};
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::{Shader, ShaderType};
 use mage::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::vertex_array::{DataType, VertexArray};
+use mage::rendering::opengl::{
+    clear, draw, set_clear_color, DrawingBuffer, DrawingMode, OpenGlType,
+};
 use mage::resources::texture::TextureLoader;
+use mage::MageError;
 
 const VERTEX_SHADER: &'static str = "#version 330 core
 layout (location = 0) in vec3 aPos;
@@ -49,6 +49,40 @@ void main()
     FragColor = texture(texture1, TexCoord) * vec4(ourColor, 1);
 }";
 
+struct GameSystem {
+    program: Program,
+    texture: Arc<Texture>,
+    vertex_array: VertexArray,
+}
+
+impl System for GameSystem {
+    fn name(&self) -> &str {
+        "Game System"
+    }
+
+    fn start(&self, _world: &mut World) -> Result<(), String> {
+        set_clear_color(Vector4::new(0.3, 0.3, 0.5, 1.0));
+        Ok(())
+    }
+
+    fn early_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+        clear(&vec![DrawingBuffer::Color]);
+        Ok(())
+    }
+
+    fn update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+        self.texture.bind(0);
+        self.program.use_program();
+        self.vertex_array.bind();
+        draw(DrawingMode::Triangles, 6, OpenGlType::UnsignedInt);
+        Ok(())
+    }
+
+    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+        Ok(())
+    }
+}
+
 fn load_texture(texture_info: TextureInfo) -> Result<Arc<Texture>, MageError> {
     let mut loader = TextureLoader::new();
     loader.load_texture_2d(&texture_info)
@@ -56,13 +90,12 @@ fn load_texture(texture_info: TextureInfo) -> Result<Arc<Texture>, MageError> {
 
 pub fn main() {
     env_logger::init();
-    let mut window = Window::new().unwrap();
-
+    let mut game = Game::new("Opengl abstractions", 800, 600).unwrap();
     let program = Program::new(
         Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
         Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
     )
-        .unwrap();
+    .unwrap();
     let quad = vertical_plane(vec![]);
     let vertex_array = VertexArray::new();
     let array_buffer = Buffer::new(BufferType::Array);
@@ -102,25 +135,11 @@ pub fn main() {
             ),
         ]),
     })
-        .unwrap();
-
-    set_clear_color(Vector4::new(0.3, 0.3, 0.5, 1.0));
-    'game_loop: loop {
-        for event in window.poll_events() {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => break 'game_loop,
-                _ => {}
-            }
-        }
-        clear(&vec![DrawingBuffer::Color]);
-        texture.bind(0);
-        program.use_program();
-        vertex_array.bind();
-        draw(DrawingMode::Triangles, 6, OpenGlType::UnsignedInt);
-        window.swap_buffers();
-    }
+    .unwrap();
+    let game_system = GameSystem {
+        program,
+        texture,
+        vertex_array,
+    };
+    game.play(vec![Box::new(game_system)]).unwrap();
 }

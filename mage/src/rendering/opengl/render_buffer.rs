@@ -32,4 +32,4 @@ impl Drop for RenderBuffer {
     }
 }
 
-impl ! Sync for RenderBuffer {}
+impl !Sync for RenderBuffer {}

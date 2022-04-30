@@ -276,4 +276,4 @@ impl Drop for Texture {
     }
 }
 
-impl ! Sync for Texture {}
+impl !Sync for Texture {}

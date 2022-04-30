@@ -68,4 +68,4 @@ impl Drop for Shader {
     }
 }
 
-impl ! Sync for Shader {}
+impl !Sync for Shader {}

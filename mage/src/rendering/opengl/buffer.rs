@@ -113,4 +113,4 @@ impl Drop for Buffer {
     }
 }
 
-impl ! Sync for Buffer {}
+impl !Sync for Buffer {}

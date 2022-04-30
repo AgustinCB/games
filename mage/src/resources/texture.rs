@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use image::EncodableLayout;
 use image::io::Reader;
+use image::EncodableLayout;
 
-use crate::MageError;
 use crate::rendering::model::mesh::{TextureInfo, TextureSource};
 use crate::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat};
+use crate::MageError;
 
 pub struct TextureLoader {
     textures: HashMap<TextureSource, Arc<Texture>>,

@@ -291,4 +291,4 @@ impl Drop for FrameBuffer {
     }
 }
 
-impl ! Sync for FrameBuffer {}
+impl !Sync for FrameBuffer {}

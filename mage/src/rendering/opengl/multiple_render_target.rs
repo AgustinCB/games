@@ -126,4 +126,4 @@ impl Drop for MultipleRenderTarget {
     }
 }
 
-impl ! Sync for MultipleRenderTarget {}
+impl !Sync for MultipleRenderTarget {}

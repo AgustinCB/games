@@ -99,4 +99,4 @@ impl Drop for PingPongFrameBuffer {
     }
 }
 
-impl ! Sync for PingPongFrameBuffer {}
+impl !Sync for PingPongFrameBuffer {}

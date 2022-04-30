@@ -9,8 +9,8 @@ use log::warn;
 use nalgebra::{Matrix4, Vector3, Vector4};
 use thiserror::Error;
 
-use crate::MageError;
 use crate::rendering::opengl::shader::Shader;
+use crate::MageError;
 
 #[derive(Debug, Error)]
 pub enum ProgramError {
@@ -161,4 +161,4 @@ impl Drop for Program {
     }
 }
 
-impl ! Sync for Program {}
+impl !Sync for Program {}
