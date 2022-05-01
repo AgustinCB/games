@@ -2,57 +2,60 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use hecs::World;
-use nalgebra::Vector4;
+use nalgebra::{Rotation, Translation3, Vector3, Vector4};
 use russimp::texture::TextureType;
 
 use mage::core::game::Game;
 use mage::core::system::System;
+use mage::gameplay::camera::{Camera, FixedCamera};
 use mage::rendering::model::mesh::{TextureInfo, TextureSource};
-use mage::rendering::model::plane::vertical_plane;
+use mage::rendering::model::cube::cube;
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::{Shader, ShaderType};
 use mage::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::vertex_array::{DataType, VertexArray};
 use mage::rendering::opengl::{
-    clear, draw_elements, set_clear_color, DrawingBuffer, DrawingMode, OpenGlType,
+    clear, draw_arrays, enable, set_clear_color, DrawingBuffer, DrawingMode, Feature,
 };
 use mage::resources::texture::TextureLoader;
 use mage::MageError;
 
-const VERTEX_SHADER: &'static str = "#version 330 core
+const VERTEX_SHADER: &'static str = "#version 460 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
 
-out vec3 ourColor;
 out vec2 TexCoord;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main()
 {
-    vec3 position = aPos * 0.5;
-    gl_Position = vec4(position, 1.0);
-    ourColor = vec3(aTexCoord, 1.0);
-    TexCoord = vec2(aTexCoord.x, aTexCoord.y);
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    TexCoord = aTexCoord;
 }";
 
-const FRAGMENT_SHADER: &'static str = "#version 330 core
+const FRAGMENT_SHADER: &'static str = "#version 460 core
 out vec4 FragColor;
 
-in vec3 ourColor;
 in vec2 TexCoord;
 
 uniform sampler2D texture1;
 
 void main()
 {
-    FragColor = texture(texture1, TexCoord) * vec4(ourColor, 1);
+    FragColor = texture(texture1, TexCoord);
 }";
 
 struct GameSystem {
+    drawing_mode: DrawingMode,
     program: Program,
     texture: Arc<Texture>,
     vertex_array: VertexArray,
+    vertices: u32,
 }
 
 impl System for GameSystem {
@@ -61,12 +64,13 @@ impl System for GameSystem {
     }
 
     fn start(&self, _world: &mut World) -> Result<(), String> {
+        enable(Feature::Depth);
         set_clear_color(Vector4::new(0.3, 0.3, 0.5, 1.0));
         Ok(())
     }
 
     fn early_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
-        clear(&vec![DrawingBuffer::Color]);
+        clear(&vec![DrawingBuffer::Color, DrawingBuffer::Depth]);
         Ok(())
     }
 
@@ -74,7 +78,7 @@ impl System for GameSystem {
         self.texture.bind(0);
         self.program.use_program();
         self.vertex_array.bind();
-        draw_elements(DrawingMode::Triangles, 6, OpenGlType::UnsignedInt);
+        draw_arrays(self.drawing_mode, self.vertices);
         Ok(())
     }
 
@@ -90,26 +94,29 @@ fn load_texture(texture_info: TextureInfo) -> Result<Arc<Texture>, MageError> {
 
 pub fn main() {
     env_logger::init();
-    let mut game = Game::new("Opengl abstractions", 800, 600).unwrap();
+    let mut game = Game::new("Fixed camera", 800, 600).unwrap();
     let program = Program::new(
         Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
         Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
     )
     .unwrap();
-    let quad = vertical_plane(vec![]);
+    // let cube = cube(vec![]);
+    let cube = cube(vec![]);
     let vertex_array = VertexArray::new();
     let array_buffer = Buffer::new(BufferType::Array);
-    let element_buffer = Buffer::new(BufferType::ElementArray);
     vertex_array.bind();
     array_buffer.bind();
-    array_buffer.set_data(&quad.flattened_data(), BufferUsage::StaticDraw);
-    element_buffer.bind();
-    element_buffer.set_data(&quad.indices.clone().unwrap(), BufferUsage::StaticDraw);
+    array_buffer.set_data(&cube.flattened_data(), BufferUsage::StaticDraw);
     VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 0, 8, 3, 0, false);
     VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 1, 8, 3, 3, false);
     VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 2, 8, 2, 6, false);
+    let camera = FixedCamera::new(800, 600, Vector3::new(0f32, 0f32, 3f32));
     program.use_program();
     program.set_uniform_i1("texture1", 0);
+    program.set_uniform_matrix4("model", Rotation::from_axis_angle(&Vector3::x_axis(), -55f32.to_radians()).to_homogeneous());
+    program.set_uniform_matrix4("view", Translation3::new(0f32, 0f32, -3f32).to_homogeneous());
+    program.set_uniform_matrix4("view", camera.look_at_matrix());
+    program.set_uniform_matrix4("projection", camera.projection());
 
     let texture = load_texture(TextureInfo {
         id: 0,
@@ -127,7 +134,7 @@ pub fn main() {
                 TextureParameter::TextureWrapT,
                 TextureParameterValue::Repeat,
             ),
-            (
+           (
                 TextureParameter::TextureMinFilter,
                 TextureParameterValue::LinearMipmapLinear,
             ),
@@ -142,6 +149,8 @@ pub fn main() {
         program,
         texture,
         vertex_array,
+        drawing_mode: cube.drawing_mode,
+        vertices: cube.len_vertices() as u32,
     };
     game.play(vec![Box::new(game_system)]).unwrap();
 }

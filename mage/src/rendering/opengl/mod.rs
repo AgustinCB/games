@@ -44,8 +44,15 @@ pub enum DrawingMode {
 
 #[repr(u32)]
 #[derive(Clone, Copy, Debug)]
+pub enum Feature {
+    Depth = gl::DEPTH_TEST,
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug)]
 pub enum DrawingBuffer {
     Color = gl::COLOR_BUFFER_BIT,
+    Depth = gl::DEPTH_BUFFER_BIT,
 }
 
 pub fn set_clear_color(color: Vector4<f32>) {
@@ -62,11 +69,23 @@ pub fn clear(buffers: &[DrawingBuffer]) {
     gl_function!(Clear(buffers));
 }
 
-pub fn draw(mode: DrawingMode, vertices: u32, indices_type: OpenGlType) {
+pub fn draw_arrays(mode: DrawingMode, vertices: u32) {
+    gl_function!(DrawArrays(
+        mode as _,
+        0,
+        vertices as _,
+    ));
+}
+
+pub fn draw_elements(mode: DrawingMode, vertices: u32, indices_type: OpenGlType) {
     gl_function!(DrawElements(
         mode as _,
         vertices as _,
         indices_type as _,
         std::ptr::null()
     ));
+}
+
+pub fn enable(feature: Feature) {
+    gl_function!(Enable(feature as _));
 }
