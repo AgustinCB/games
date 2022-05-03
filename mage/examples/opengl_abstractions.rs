@@ -7,7 +7,7 @@ use russimp::texture::TextureType;
 
 use mage::core::game::Game;
 use mage::core::system::System;
-use mage::rendering::model::mesh::{TextureInfo, TextureSource};
+use mage::rendering::model::mesh::{Mesh, TextureInfo, TextureSource};
 use mage::rendering::model::plane::vertical_plane;
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use mage::rendering::opengl::program::Program;
@@ -15,7 +15,7 @@ use mage::rendering::opengl::shader::{Shader, ShaderType};
 use mage::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::vertex_array::{DataType, VertexArray};
 use mage::rendering::opengl::{
-    clear, draw_elements, set_clear_color, DrawingBuffer, DrawingMode, OpenGlType,
+    clear, set_clear_color, DrawingBuffer,
 };
 use mage::resources::texture::TextureLoader;
 use mage::MageError;
@@ -50,9 +50,72 @@ void main()
 }";
 
 struct GameSystem {
+    _array_buffer: Buffer,
+    _element_buffer: Buffer,
+    mesh: Mesh,
     program: Program,
     texture: Arc<Texture>,
     vertex_array: VertexArray,
+}
+
+impl GameSystem {
+    fn new() -> Result<GameSystem, MageError> {
+        let program = Program::new(
+            Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
+            Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
+        )
+        .unwrap();
+        let quad = vertical_plane(vec![]);
+        let vertex_array = VertexArray::new();
+        let array_buffer = Buffer::new(BufferType::Array);
+        let element_buffer = Buffer::new(BufferType::ElementArray);
+        vertex_array.bind();
+        array_buffer.bind();
+        array_buffer.set_data(&quad.flattened_data(), BufferUsage::StaticDraw);
+        element_buffer.bind();
+        element_buffer.set_data(&quad.indices.clone().unwrap(), BufferUsage::StaticDraw);
+        VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 0, 8, 3, 0, false);
+        VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 1, 8, 3, 3, false);
+        VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 2, 8, 2, 6, false);
+        program.use_program();
+        program.set_uniform_i1("texture1", 0);
+
+        let texture = load_texture(TextureInfo {
+            id: 0,
+            texture_type: TextureType::Diffuse,
+            source: TextureSource::File(format!(
+                "{}/examples/resources/container.jpg",
+                env!("CARGO_MANIFEST_DIR")
+            )),
+            parameters: HashMap::from([
+                (
+                    TextureParameter::TextureWrapS,
+                    TextureParameterValue::Repeat,
+                ),
+                (
+                    TextureParameter::TextureWrapT,
+                    TextureParameterValue::Repeat,
+                ),
+                (
+                    TextureParameter::TextureMinFilter,
+                    TextureParameterValue::LinearMipmapLinear,
+                ),
+                (
+                    TextureParameter::TextureMagFilter,
+                    TextureParameterValue::Linear,
+                ),
+            ]),
+        })
+        .unwrap();
+        Ok(GameSystem {
+            program,
+            texture,
+            vertex_array,
+            _array_buffer: array_buffer,
+            _element_buffer: element_buffer,
+            mesh: quad,
+        })
+    }
 }
 
 impl System for GameSystem {
@@ -74,7 +137,7 @@ impl System for GameSystem {
         self.texture.bind(0);
         self.program.use_program();
         self.vertex_array.bind();
-        draw_elements(DrawingMode::Triangles, 6, OpenGlType::UnsignedInt);
+        self.mesh.draw();
         Ok(())
     }
 
@@ -91,57 +154,5 @@ fn load_texture(texture_info: TextureInfo) -> Result<Arc<Texture>, MageError> {
 pub fn main() {
     env_logger::init();
     let mut game = Game::new("Opengl abstractions", 800, 600).unwrap();
-    let program = Program::new(
-        Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
-        Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
-    )
-    .unwrap();
-    let quad = vertical_plane(vec![]);
-    let vertex_array = VertexArray::new();
-    let array_buffer = Buffer::new(BufferType::Array);
-    let element_buffer = Buffer::new(BufferType::ElementArray);
-    vertex_array.bind();
-    array_buffer.bind();
-    array_buffer.set_data(&quad.flattened_data(), BufferUsage::StaticDraw);
-    element_buffer.bind();
-    element_buffer.set_data(&quad.indices.clone().unwrap(), BufferUsage::StaticDraw);
-    VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 0, 8, 3, 0, false);
-    VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 1, 8, 3, 3, false);
-    VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 2, 8, 2, 6, false);
-    program.use_program();
-    program.set_uniform_i1("texture1", 0);
-
-    let texture = load_texture(TextureInfo {
-        id: 0,
-        texture_type: TextureType::Diffuse,
-        source: TextureSource::File(format!(
-            "{}/examples/resources/container.jpg",
-            env!("CARGO_MANIFEST_DIR")
-        )),
-        parameters: HashMap::from([
-            (
-                TextureParameter::TextureWrapS,
-                TextureParameterValue::Repeat,
-            ),
-            (
-                TextureParameter::TextureWrapT,
-                TextureParameterValue::Repeat,
-            ),
-            (
-                TextureParameter::TextureMinFilter,
-                TextureParameterValue::LinearMipmapLinear,
-            ),
-            (
-                TextureParameter::TextureMagFilter,
-                TextureParameterValue::Linear,
-            ),
-        ]),
-    })
-    .unwrap();
-    let game_system = GameSystem {
-        program,
-        texture,
-        vertex_array,
-    };
-    game.play(vec![Box::new(game_system)]).unwrap();
+    game.play(vec![Box::new(GameSystem::new().unwrap())]).unwrap();
 }
