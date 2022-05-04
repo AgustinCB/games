@@ -70,11 +70,7 @@ pub fn clear(buffers: &[DrawingBuffer]) {
 }
 
 pub fn draw_arrays(mode: DrawingMode, vertices: u32) {
-    gl_function!(DrawArrays(
-        mode as _,
-        0,
-        vertices as _,
-    ));
+    gl_function!(DrawArrays(mode as _, 0, vertices as _,));
 }
 
 pub fn draw_elements(mode: DrawingMode, vertices: u32, indices_type: OpenGlType) {

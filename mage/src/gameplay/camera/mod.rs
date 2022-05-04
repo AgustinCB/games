@@ -17,7 +17,14 @@ pub struct FixedCamera {
 impl FixedCamera {
     pub fn new(width: u32, height: u32, position: Vector3<f32>) -> FixedCamera {
         FixedCamera::new_with_world_reference(
-            width, height, 45f32, 0.1, 100f32, position, UnitVector3::new_normalize(Vector3::new(0f32, 0f32, -1f32)), Vector3::y_axis(),
+            width,
+            height,
+            45f32,
+            0.1,
+            100f32,
+            position,
+            UnitVector3::new_normalize(Vector3::new(0f32, 0f32, -1f32)),
+            Vector3::y_axis(),
         )
     }
 
@@ -36,7 +43,8 @@ impl FixedCamera {
             fov.to_radians(),
             close_plane,
             far_plane,
-        ).to_homogeneous();
+        )
+        .to_homogeneous();
         let right = UnitVector3::new_normalize(front.cross(&world_up));
         let up = UnitVector3::new_normalize(right.cross(&front));
         let look_at_matrix = Matrix4::look_at_rh(

@@ -7,7 +7,7 @@ use russimp::texture::TextureType;
 
 use crate::rendering::opengl::program::Program;
 use crate::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
-use crate::rendering::opengl::{DrawingMode, OpenGlType, draw_arrays, draw_elements};
+use crate::rendering::opengl::{draw_arrays, draw_elements, DrawingMode, OpenGlType};
 
 fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
     vectors
@@ -55,7 +55,11 @@ impl Mesh {
 
     pub fn draw(&self) {
         if self.indices.is_some() {
-            draw_elements(self.drawing_mode, self.len_vertices() as u32, OpenGlType::UnsignedInt);
+            draw_elements(
+                self.drawing_mode,
+                self.len_vertices() as u32,
+                OpenGlType::UnsignedInt,
+            );
         } else {
             draw_arrays(self.drawing_mode, self.len_vertices() as u32);
         }

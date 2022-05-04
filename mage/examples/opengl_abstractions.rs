@@ -14,9 +14,7 @@ use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::{Shader, ShaderType};
 use mage::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::vertex_array::{DataType, VertexArray};
-use mage::rendering::opengl::{
-    clear, set_clear_color, DrawingBuffer,
-};
+use mage::rendering::opengl::{clear, set_clear_color, DrawingBuffer};
 use mage::resources::texture::TextureLoader;
 use mage::MageError;
 
@@ -154,5 +152,6 @@ fn load_texture(texture_info: TextureInfo) -> Result<Arc<Texture>, MageError> {
 pub fn main() {
     env_logger::init();
     let mut game = Game::new("Opengl abstractions", 800, 600).unwrap();
-    game.play(vec![Box::new(GameSystem::new().unwrap())]).unwrap();
+    game.play(vec![Box::new(GameSystem::new().unwrap())])
+        .unwrap();
 }

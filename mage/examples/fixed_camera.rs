@@ -8,16 +8,14 @@ use russimp::texture::TextureType;
 use mage::core::game::Game;
 use mage::core::system::System;
 use mage::gameplay::camera::{Camera, FixedCamera};
-use mage::rendering::model::mesh::{Mesh, TextureInfo, TextureSource};
 use mage::rendering::model::cube::cube;
+use mage::rendering::model::mesh::{Mesh, TextureInfo, TextureSource};
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::{Shader, ShaderType};
 use mage::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::vertex_array::{DataType, VertexArray};
-use mage::rendering::opengl::{
-    clear, enable, set_clear_color, DrawingBuffer, Feature,
-};
+use mage::rendering::opengl::{clear, enable, set_clear_color, DrawingBuffer, Feature};
 use mage::resources::texture::TextureLoader;
 use mage::MageError;
 
@@ -76,8 +74,14 @@ impl GameSystem {
         let camera = FixedCamera::new(800, 600, Vector3::new(0f32, 0f32, 3f32));
         program.use_program();
         program.set_uniform_i1("texture1", 0);
-        program.set_uniform_matrix4("model", Rotation::from_axis_angle(&Vector3::x_axis(), -55f32.to_radians()).to_homogeneous());
-        program.set_uniform_matrix4("view", Translation3::new(0f32, 0f32, -3f32).to_homogeneous());
+        program.set_uniform_matrix4(
+            "model",
+            Rotation::from_axis_angle(&Vector3::x_axis(), -55f32.to_radians()).to_homogeneous(),
+        );
+        program.set_uniform_matrix4(
+            "view",
+            Translation3::new(0f32, 0f32, -3f32).to_homogeneous(),
+        );
         program.set_uniform_matrix4("view", camera.look_at_matrix());
         program.set_uniform_matrix4("projection", camera.projection());
 
@@ -97,7 +101,7 @@ impl GameSystem {
                     TextureParameter::TextureWrapT,
                     TextureParameterValue::Repeat,
                 ),
-               (
+                (
                     TextureParameter::TextureMinFilter,
                     TextureParameterValue::LinearMipmapLinear,
                 ),
@@ -154,5 +158,6 @@ fn load_texture(texture_info: TextureInfo) -> Result<Arc<Texture>, MageError> {
 pub fn main() {
     env_logger::init();
     let mut game = Game::new("Fixed camera", 800, 600).unwrap();
-    game.play(vec![Box::new(GameSystem::new().unwrap())]).unwrap();
+    game.play(vec![Box::new(GameSystem::new().unwrap())])
+        .unwrap();
 }
