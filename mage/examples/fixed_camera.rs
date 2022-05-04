@@ -7,7 +7,7 @@ use russimp::texture::TextureType;
 
 use mage::core::game::Game;
 use mage::core::system::System;
-use mage::gameplay::camera::{Camera, FixedCamera};
+use mage::gameplay::camera::{Camera, FixedCameraBuilder};
 use mage::rendering::model::cube::cube;
 use mage::rendering::model::mesh::{Mesh, TextureInfo, TextureSource};
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
@@ -71,7 +71,7 @@ impl GameSystem {
         VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 0, 8, 3, 0, false);
         VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 1, 8, 3, 3, false);
         VertexArray::set_vertex_attrib_with_padding::<f32>(DataType::Float, 2, 8, 2, 6, false);
-        let camera = FixedCamera::new(800, 600, Vector3::new(0f32, 0f32, 3f32));
+        let camera = FixedCameraBuilder::new(800, 600, Vector3::new(0f32, 0f32, 3f32)).build();
         program.use_program();
         program.set_uniform_i1("texture1", 0);
         program.set_uniform_matrix4(
