@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use hecs::World;
+use include_dir::{Dir, include_dir};
 use nalgebra::{Rotation, Translation3, Vector3, Vector4};
 use russimp::texture::TextureType;
 
@@ -12,41 +13,15 @@ use mage::rendering::model::cube::cube;
 use mage::rendering::model::mesh::{Mesh, TextureInfo, TextureSource};
 use mage::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use mage::rendering::opengl::program::Program;
-use mage::rendering::opengl::shader::{Shader, ShaderType};
+use mage::rendering::opengl::shader::ShaderType;
 use mage::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::vertex_array::{DataType, VertexArray};
 use mage::rendering::opengl::{clear, enable, set_clear_color, DrawingBuffer, Feature};
+use mage::resources::shader::ShaderLoader;
 use mage::resources::texture::TextureLoader;
 use mage::MageError;
 
-const VERTEX_SHADER: &'static str = "#version 460 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aTexCoord;
-
-out vec2 TexCoord;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-void main()
-{
-    gl_Position = projection * view *  model * vec4(aPos, 1.0);
-    TexCoord = aTexCoord;
-}";
-
-const FRAGMENT_SHADER: &'static str = "#version 460 core
-out vec4 FragColor;
-
-in vec2 TexCoord;
-
-uniform sampler2D texture1;
-
-void main()
-{
-    FragColor = texture(texture1, TexCoord);
-}";
+static SHADER_DIR: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/examples/resources/shaders");
 
 struct GameSystem {
     _array_buffer: Buffer,
@@ -58,9 +33,10 @@ struct GameSystem {
 
 impl GameSystem {
     fn new() -> Result<GameSystem, MageError> {
+        let loader = ShaderLoader::new(&SHADER_DIR)?;
         let program = Program::new(
-            Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
-            Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
+            loader.load(ShaderType::Vertex, "basic_vertex.glsl")?,
+            loader.load(ShaderType::Fragment, "basic_fragment.glsl")?,
         )?;
         let cube = cube(vec![]);
         let vertex_array = VertexArray::new();
