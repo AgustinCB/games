@@ -14,6 +14,7 @@ use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::ShaderType;
 use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::{clear, enable, set_clear_color, DrawingBuffer, Feature};
+use mage::rendering::TransformBuilder;
 use mage::resources::shader::ShaderLoader;
 use mage::MageError;
 
@@ -62,7 +63,13 @@ impl GameSystem {
         program.set_uniform_i1("texture1", 0);
         program.set_uniform_matrix4(
             "model",
-            Rotation::from_axis_angle(&Vector3::x_axis(), -55f32.to_radians()).to_homogeneous(),
+            TransformBuilder::new()
+                .with_rotation(Rotation::from_axis_angle(
+                    &Vector3::x_axis(),
+                    -55f32.to_radians(),
+                ))
+                .build()
+                .get_model_matrix(),
         );
         program.set_uniform_matrix4("view", camera.look_at_matrix());
         program.set_uniform_matrix4("projection", camera.projection());
