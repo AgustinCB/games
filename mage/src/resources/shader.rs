@@ -37,7 +37,8 @@ impl ShaderLoader {
             .map(|f| f.contents_utf8())?
             .map(|s| s.to_string())
             .ok_or_else(|| Box::new(ShaderLoaderError::EmptyFile(glsl.to_owned())))?;
-        for cap in self.regex.captures_iter(&(content.clone())) {
+        let iterating_content = content.clone();
+        for cap in self.regex.captures_iter(&iterating_content) {
             content = content.replace(
                 &(INCLUDE_STR.to_owned() + &cap[1] + r#"""#),
                 &self.load_file(&cap[1])?,

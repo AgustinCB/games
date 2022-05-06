@@ -5,9 +5,13 @@ use itertools::multizip;
 use nalgebra::{ArrayStorage, Matrix, Vector2, Vector3, U1};
 use russimp::texture::TextureType;
 
+use crate::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use crate::rendering::opengl::program::Program;
 use crate::rendering::opengl::texture::{Texture, TextureParameter, TextureParameterValue};
+use crate::rendering::opengl::vertex_array::{DataType, VertexArray};
 use crate::rendering::opengl::{draw_arrays, draw_elements, DrawingMode, OpenGlType};
+use crate::resources::texture::TextureLoader;
+use crate::MageError;
 
 fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
     vectors
@@ -53,71 +57,101 @@ impl Mesh {
         }
     }
 
-    pub fn draw(&self) {
-        if self.indices.is_some() {
-            draw_elements(
-                self.drawing_mode,
-                self.len_vertices() as u32,
-                OpenGlType::UnsignedInt,
-            );
+    pub fn to_rendering_mesh(&self) -> Result<RenderingMesh, MageError> {
+        let size = self.size() as u32;
+        let mut attribute = 0;
+        let mut start = 0;
+        let vertex_array = VertexArray::new();
+        let array_buffer = Buffer::new(BufferType::Array);
+        vertex_array.bind();
+        array_buffer.bind();
+        array_buffer.set_data(&self.flattened_data(), BufferUsage::StaticDraw);
+        let element_buffer = if let Some(indices) = &self.indices {
+            let element_buffer = Buffer::new(BufferType::ElementArray);
+            element_buffer.bind();
+            element_buffer.set_data(indices, BufferUsage::StaticDraw);
+            Some(element_buffer)
         } else {
-            draw_arrays(self.drawing_mode, self.len_vertices() as u32);
+            None
+        };
+        VertexArray::set_vertex_attrib_with_padding::<f32>(
+            DataType::Float,
+            attribute,
+            size,
+            3,
+            start,
+            false,
+        );
+        start += 3;
+        attribute += 1;
+        if self.normals.is_some() {
+            VertexArray::set_vertex_attrib_with_padding::<f32>(
+                DataType::Float,
+                attribute,
+                size,
+                3,
+                start,
+                false,
+            );
+            start += 3;
+            attribute += 1;
         }
-    }
+        if self.texture_coordinates.is_some() {
+            VertexArray::set_vertex_attrib_with_padding::<f32>(
+                DataType::Float,
+                attribute,
+                size,
+                2,
+                start,
+                false,
+            );
+            start += 2;
+            attribute += 1;
+        }
+        if self.tangents.is_some() {
+            VertexArray::set_vertex_attrib_with_padding::<f32>(
+                DataType::Float,
+                attribute,
+                size,
+                3,
+                start,
+                false,
+            );
+            start += 3;
+            attribute += 1;
+        }
+        if self.bitangents.is_some() {
+            VertexArray::set_vertex_attrib_with_padding::<f32>(
+                DataType::Float,
+                attribute,
+                size,
+                3,
+                start,
+                false,
+            );
+        }
+        let mut textures = vec![];
 
-    pub fn set_program(&self, program: &Program, textures: &[Arc<Texture>]) {
-        let mut diffuse_index = 0;
-        let mut specular_index = 0;
-        let mut normal_index = 0;
-        let mut height_index = 0;
-        let mut metallic_index = 0;
-        let mut roughness_index = 0;
-        let mut ao_index = 0;
-        if let Some(infos) = &self.textures {
-            for (texture, info) in textures.iter().zip(infos.iter()) {
-                texture.bind(gl::TEXTURE0 + info.id as u32);
-                let (texture_type, texture_index) = if info.texture_type == TextureType::Diffuse {
-                    let index = diffuse_index;
-                    diffuse_index += 1;
-                    ("diffuse", index)
-                } else if info.texture_type == TextureType::Specular {
-                    let index = specular_index;
-                    specular_index += 1;
-                    ("specular", index)
-                } else if info.texture_type == TextureType::Normals {
-                    let index = normal_index;
-                    normal_index += 1;
-                    ("normal", index)
-                } else if info.texture_type == TextureType::Height {
-                    let index = height_index;
-                    height_index += 1;
-                    ("height", index)
-                } else if info.texture_type == TextureType::Metalness {
-                    let index = metallic_index;
-                    metallic_index += 1;
-                    ("metalness", index)
-                } else if info.texture_type == TextureType::Roughness {
-                    let index = roughness_index;
-                    roughness_index += 1;
-                    ("roughness", index)
-                } else if info.texture_type == TextureType::AmbientOcclusion {
-                    let index = ao_index;
-                    ao_index += 1;
-                    ("ao", index)
-                } else {
-                    panic!("Can't happen");
-                };
-                program.set_uniform_i1(
-                    &format!("material.{}{}", texture_type, texture_index),
-                    info.id as i32,
-                );
+        if let Some(texture_infos) = &self.textures {
+            let mut loader = TextureLoader::new();
+            for texture_info in texture_infos.iter() {
+                textures.push(loader.load_texture_2d(texture_info)?);
             }
         }
-        program.set_uniform_i1("material.n_diffuse", diffuse_index);
-        program.set_uniform_i1("material.n_specular", specular_index);
-        program.set_uniform_i1("material.n_height", height_index);
-        let shininess = self.shininess.unwrap_or(64f32);
-        program.set_uniform_f1("material.shininess", shininess);
+        Ok(RenderingMesh {
+            array_buffer,
+            element_buffer,
+            textures,
+            vertex_array,
+            mesh: self.clone(),
+        })
+    }
+
+    pub fn size(&self) -> usize {
+        3 + self.normals.as_ref().map(|_| 3).unwrap_or(0)
+            + self.texture_coordinates.as_ref().map(|_| 2).unwrap_or(0)
+            + self.tangents.as_ref().map(|_| 3).unwrap_or(0)
+            + self.bitangents.as_ref().map(|_| 3).unwrap_or(0)
     }
 
     pub fn flattened_data(&self) -> Vec<f32> {
@@ -259,5 +293,84 @@ impl Mesh {
                 d
             })
             .collect::<Vec<f32>>()
+    }
+}
+
+#[derive(Debug)]
+pub struct RenderingMesh {
+    pub array_buffer: Buffer,
+    pub element_buffer: Option<Buffer>,
+    pub vertex_array: VertexArray,
+    mesh: Mesh,
+    textures: Vec<Arc<Texture>>,
+}
+
+impl RenderingMesh {
+    pub fn draw(&self) {
+        self.vertex_array.bind();
+        if self.element_buffer.is_some() {
+            draw_elements(
+                self.mesh.drawing_mode,
+                self.mesh.len_vertices() as u32,
+                OpenGlType::UnsignedInt,
+            );
+        } else {
+            draw_arrays(self.mesh.drawing_mode, self.mesh.len_vertices() as u32);
+        }
+    }
+
+    pub fn attach_to_program(&self, program: &Program) {
+        let mut diffuse_index = 0;
+        let mut specular_index = 0;
+        let mut normal_index = 0;
+        let mut height_index = 0;
+        let mut metallic_index = 0;
+        let mut roughness_index = 0;
+        let mut ao_index = 0;
+        if let Some(infos) = &self.mesh.textures {
+            for (texture, info) in self.textures.iter().zip(infos.iter()) {
+                texture.bind(info.id as u32);
+                let (texture_type, texture_index) = if info.texture_type == TextureType::Diffuse {
+                    let index = diffuse_index;
+                    diffuse_index += 1;
+                    ("diffuse", index)
+                } else if info.texture_type == TextureType::Specular {
+                    let index = specular_index;
+                    specular_index += 1;
+                    ("specular", index)
+                } else if info.texture_type == TextureType::Normals {
+                    let index = normal_index;
+                    normal_index += 1;
+                    ("normal", index)
+                } else if info.texture_type == TextureType::Height {
+                    let index = height_index;
+                    height_index += 1;
+                    ("height", index)
+                } else if info.texture_type == TextureType::Metalness {
+                    let index = metallic_index;
+                    metallic_index += 1;
+                    ("metalness", index)
+                } else if info.texture_type == TextureType::Roughness {
+                    let index = roughness_index;
+                    roughness_index += 1;
+                    ("roughness", index)
+                } else if info.texture_type == TextureType::AmbientOcclusion {
+                    let index = ao_index;
+                    ao_index += 1;
+                    ("ao", index)
+                } else {
+                    panic!("Can't happen");
+                };
+                program.set_uniform_i1(
+                    &format!("material.{}{}", texture_type, texture_index),
+                    info.id as i32,
+                );
+            }
+        }
+        program.set_uniform_i1("material.n_diffuse", diffuse_index);
+        program.set_uniform_i1("material.n_specular", specular_index);
+        program.set_uniform_i1("material.n_height", height_index);
+        let shininess = self.mesh.shininess.unwrap_or(64f32);
+        program.set_uniform_f1("material.shininess", shininess);
     }
 }
