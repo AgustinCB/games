@@ -86,7 +86,7 @@ impl System for GameSystem {
         "Game System"
     }
 
-    fn start(&self, _world: &mut World) -> Result<(), String> {
+    fn start(&self, _world: &mut World) -> Result<(), MageError> {
         enable(Feature::Depth);
         self.program.use_program();
         self.rendering_mesh.attach_to_program(&self.program);
@@ -94,18 +94,18 @@ impl System for GameSystem {
         Ok(())
     }
 
-    fn early_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn early_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         clear(&vec![DrawingBuffer::Color, DrawingBuffer::Depth]);
         Ok(())
     }
 
-    fn update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         self.program.use_program();
         self.rendering_mesh.draw();
         Ok(())
     }
 
-    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         Ok(())
     }
 }

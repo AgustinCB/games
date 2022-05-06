@@ -1,4 +1,5 @@
 use crate::core::system::System;
+use crate::MageError;
 use hecs::World;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -54,12 +55,12 @@ impl System for InputSystem {
         "Input"
     }
 
-    fn start(&self, _world: &mut World) -> Result<(), String> {
+    fn start(&self, _world: &mut World) -> Result<(), MageError> {
         self.pressed_down.borrow_mut().drain();
         Ok(())
     }
 
-    fn early_update(&self, world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn early_update(&self, world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         let mut events_by_type = HashMap::new();
         for event in self.event_pumper.borrow_mut().poll_iter() {
             let event_type = InputType::from(&event);
@@ -112,11 +113,11 @@ impl System for InputSystem {
         Ok(())
     }
 
-    fn update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         Ok(())
     }
 
-    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         Ok(())
     }
 }

@@ -1,5 +1,6 @@
 use crate::core::system::System;
 use crate::gameplay::input::Input;
+use crate::MageError;
 use hecs::World;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -20,11 +21,11 @@ impl System for QuitSystem {
         "Quit"
     }
 
-    fn start(&self, _world: &mut World) -> Result<(), String> {
+    fn start(&self, _world: &mut World) -> Result<(), MageError> {
         Ok(())
     }
 
-    fn early_update(&self, world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn early_update(&self, world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         for (_e, (input, quit_control)) in world.query_mut::<(&Input, &QuitControl)>() {
             for event in input.events.iter() {
                 match event {
@@ -43,11 +44,11 @@ impl System for QuitSystem {
         Ok(())
     }
 
-    fn update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         Ok(())
     }
 
-    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), String> {
+    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         Ok(())
     }
 }

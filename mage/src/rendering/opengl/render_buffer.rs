@@ -31,5 +31,3 @@ impl Drop for RenderBuffer {
         gl_function!(DeleteRenderbuffers(1, &self.0));
     }
 }
-
-impl !Sync for RenderBuffer {}

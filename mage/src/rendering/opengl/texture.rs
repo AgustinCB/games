@@ -275,5 +275,3 @@ impl Drop for Texture {
         gl_function!(DeleteTextures(1, &self.0));
     }
 }
-
-impl !Sync for Texture {}

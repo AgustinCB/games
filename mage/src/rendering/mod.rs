@@ -1,5 +1,6 @@
 use nalgebra::{Matrix4, Rotation3, Scale3, Translation3, Vector3};
 
+pub mod engine;
 pub mod model;
 pub mod opengl;
 

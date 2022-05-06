@@ -61,8 +61,8 @@ impl Mesh {
         let size = self.size() as u32;
         let mut attribute = 0;
         let mut start = 0;
-        let vertex_array = VertexArray::new();
-        let array_buffer = Buffer::new(BufferType::Array);
+        let vertex_array = Arc::new(VertexArray::new());
+        let array_buffer = Arc::new(Buffer::new(BufferType::Array));
         vertex_array.bind();
         array_buffer.bind();
         array_buffer.set_data(&self.flattened_data(), BufferUsage::StaticDraw);
@@ -70,7 +70,7 @@ impl Mesh {
             let element_buffer = Buffer::new(BufferType::ElementArray);
             element_buffer.bind();
             element_buffer.set_data(indices, BufferUsage::StaticDraw);
-            Some(element_buffer)
+            Some(Arc::new(element_buffer))
         } else {
             None
         };
@@ -138,6 +138,7 @@ impl Mesh {
                 textures.push(loader.load_texture_2d(texture_info)?);
             }
         }
+        VertexArray::unbind();
         Ok(RenderingMesh {
             array_buffer,
             element_buffer,
@@ -298,9 +299,9 @@ impl Mesh {
 
 #[derive(Debug)]
 pub struct RenderingMesh {
-    pub array_buffer: Buffer,
-    pub element_buffer: Option<Buffer>,
-    pub vertex_array: VertexArray,
+    pub array_buffer: Arc<Buffer>,
+    pub element_buffer: Option<Arc<Buffer>>,
+    pub vertex_array: Arc<VertexArray>,
     mesh: Mesh,
     textures: Vec<Arc<Texture>>,
 }
@@ -317,59 +318,26 @@ impl RenderingMesh {
         } else {
             draw_arrays(self.mesh.drawing_mode, self.mesh.len_vertices() as u32);
         }
+        VertexArray::unbind();
     }
 
     pub fn attach_to_program(&self, program: &Program) {
-        let mut diffuse_index = 0;
-        let mut specular_index = 0;
-        let mut normal_index = 0;
-        let mut height_index = 0;
-        let mut metallic_index = 0;
-        let mut roughness_index = 0;
-        let mut ao_index = 0;
         if let Some(infos) = &self.mesh.textures {
             for (texture, info) in self.textures.iter().zip(infos.iter()) {
                 texture.bind(info.id as u32);
-                let (texture_type, texture_index) = if info.texture_type == TextureType::Diffuse {
-                    let index = diffuse_index;
-                    diffuse_index += 1;
-                    ("diffuse", index)
-                } else if info.texture_type == TextureType::Specular {
-                    let index = specular_index;
-                    specular_index += 1;
-                    ("specular", index)
-                } else if info.texture_type == TextureType::Normals {
-                    let index = normal_index;
-                    normal_index += 1;
-                    ("normal", index)
-                } else if info.texture_type == TextureType::Height {
-                    let index = height_index;
-                    height_index += 1;
-                    ("height", index)
-                } else if info.texture_type == TextureType::Metalness {
-                    let index = metallic_index;
-                    metallic_index += 1;
-                    ("metalness", index)
-                } else if info.texture_type == TextureType::Roughness {
-                    let index = roughness_index;
-                    roughness_index += 1;
-                    ("roughness", index)
-                } else if info.texture_type == TextureType::AmbientOcclusion {
-                    let index = ao_index;
-                    ao_index += 1;
-                    ("ao", index)
-                } else {
-                    panic!("Can't happen");
+                let texture_type = match info.texture_type {
+                    TextureType::Diffuse => "diffuse",
+                    TextureType::Specular => "specular",
+                    TextureType::Normals => "normal",
+                    TextureType::Height => "height",
+                    TextureType::Metalness => "metalness",
+                    TextureType::Roughness => "roughness",
+                    TextureType::AmbientOcclusion => "ao",
+                    _ => panic!("Can't happen"),
                 };
-                program.set_uniform_i1(
-                    &format!("material.{}{}", texture_type, texture_index),
-                    info.id as i32,
-                );
+                program.set_uniform_i1(&format!("material.{}", texture_type), info.id as i32);
             }
         }
-        program.set_uniform_i1("material.n_diffuse", diffuse_index);
-        program.set_uniform_i1("material.n_specular", specular_index);
-        program.set_uniform_i1("material.n_height", height_index);
         let shininess = self.mesh.shininess.unwrap_or(64f32);
         program.set_uniform_f1("material.shininess", shininess);
     }

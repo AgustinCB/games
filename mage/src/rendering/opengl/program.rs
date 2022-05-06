@@ -160,5 +160,3 @@ impl Drop for Program {
         gl_function!(DeleteProgram(self.resource));
     }
 }
-
-impl !Sync for Program {}
