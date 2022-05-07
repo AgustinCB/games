@@ -4,8 +4,8 @@ use hecs::World;
 use nalgebra::Vector4;
 use russimp::texture::TextureType;
 
-use mage::core::game::Game;
-use mage::core::system::System;
+use mage::core::game::GameBuilder;
+use mage::rendering::engine::Engine;
 use mage::rendering::model::mesh::{RenderingMesh, TextureInfo, TextureSource};
 use mage::rendering::model::plane::vertical_plane;
 use mage::rendering::opengl::program::Program;
@@ -43,13 +43,13 @@ void main()
     FragColor = texture(texture1, TexCoord) * vec4(ourColor, 1);
 }";
 
-struct GameSystem {
+struct GameEngine {
     program: Program,
     rendering_mesh: RenderingMesh,
 }
 
-impl GameSystem {
-    fn new() -> Result<GameSystem, MageError> {
+impl GameEngine {
+    fn new() -> Result<GameEngine, MageError> {
         let program = Program::new(
             Shader::new(ShaderType::Vertex, VERTEX_SHADER).unwrap(),
             Shader::new(ShaderType::Fragment, FRAGMENT_SHADER).unwrap(),
@@ -83,44 +83,34 @@ impl GameSystem {
         }]);
         program.use_program();
         program.set_uniform_i1("texture1", 0);
-        Ok(GameSystem {
+        let rendering_mesh = quad.to_rendering_mesh()?;
+        program.use_program();
+        rendering_mesh.attach_to_program(&program);
+        Ok(GameEngine {
             program,
-            rendering_mesh: quad.to_rendering_mesh()?,
+            rendering_mesh,
         })
     }
 }
 
-impl System for GameSystem {
-    fn name(&self) -> &str {
-        "Game System"
-    }
-
-    fn start(&self, _world: &mut World) -> Result<(), MageError> {
-        self.program.use_program();
-        self.rendering_mesh.attach_to_program(&self.program);
+impl Engine for GameEngine {
+    fn setup(&self, _world: &mut World) -> Result<(), MageError> {
         set_clear_color(Vector4::new(0.3, 0.3, 0.5, 1.0));
         Ok(())
     }
 
-    fn early_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
+    fn render(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         clear(&vec![DrawingBuffer::Color]);
-        Ok(())
-    }
-
-    fn update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         self.program.use_program();
         self.rendering_mesh.draw();
-        Ok(())
-    }
-
-    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         Ok(())
     }
 }
 
 pub fn main() {
     env_logger::init();
-    let mut game = Game::new("Opengl abstractions", 800, 600).unwrap();
-    game.play(vec![Box::new(GameSystem::new().unwrap())])
-        .unwrap();
+    let mut game = GameBuilder::new("Opengl abstractions", 800, 600)
+        .unwrap()
+        .build(GameEngine::new().unwrap());
+    game.play(vec![]).unwrap();
 }

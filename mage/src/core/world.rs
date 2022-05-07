@@ -14,7 +14,7 @@ fn handle_result<T: Default, E: ToString>(result: Result<T, E>) -> T {
 
 pub struct World {
     systems: Vec<Box<dyn System>>,
-    world: HecsWorld,
+    pub(crate) world: HecsWorld,
 }
 
 impl World {
