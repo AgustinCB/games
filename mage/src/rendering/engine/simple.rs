@@ -75,7 +75,7 @@ impl<C: Camera> Engine for SimpleEngine<C> {
         Ok(())
     }
 
-    fn render(&self, world: &mut World, _delta_time: u64) -> Result<(), MageError> {
+    fn render(&self, world: &mut World, _delta_time: f32) -> Result<(), MageError> {
         clear(&[DrawingBuffer::Color, DrawingBuffer::Depth]);
         self.program.use_program();
         self.setup_globals();

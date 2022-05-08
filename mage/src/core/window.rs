@@ -57,6 +57,6 @@ impl Window {
     pub fn delta_time(&mut self) -> u64 {
         self.last = self.now;
         self.now = self.timer.performance_counter();
-        (self.now - self.last) / 1000
+        ((self.now - self.last) * 1000) / self.timer.performance_frequency()
     }
 }

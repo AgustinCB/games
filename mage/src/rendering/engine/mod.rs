@@ -9,7 +9,7 @@ pub(crate) const SHADER_LIBRARY: Dir<'static> = include_dir!("$CARGO_MANIFEST_DI
 pub trait Engine {
     fn setup(&self, world: &mut World) -> Result<(), MageError>;
 
-    fn render(&self, world: &mut World, delta_time: u64) -> Result<(), MageError>;
+    fn render(&self, world: &mut World, delta_time: f32) -> Result<(), MageError>;
 }
 
 pub use simple::SimpleEngine;

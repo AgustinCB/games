@@ -32,6 +32,7 @@ impl GameBuilder {
     pub fn build<E: Engine>(self, engine: E) -> Game<E> {
         Game {
             engine,
+            frame_rate: 1000 / 60, // 60 frames per second
             game_ended: self.game_ended,
             window: self.window,
             world: self.world,
@@ -41,6 +42,7 @@ impl GameBuilder {
 
 pub struct Game<E: Engine> {
     engine: E,
+    frame_rate: u64,
     game_ended: Arc<AtomicBool>,
     window: Window,
     world: World,
@@ -80,13 +82,23 @@ impl<E: Engine> Game<E> {
         self.window.start_timer();
         self.engine.setup(&mut self.world.world)?;
         self.world.start();
+        let mut lag = 0;
         while !self.game_ended.load(Ordering::Relaxed) {
             let delta_time = self.window.delta_time();
+            lag += delta_time;
 
             self.world.early_update(delta_time);
-            self.world.update(delta_time);
+
+            while lag >= self.frame_rate {
+                self.world.update(delta_time);
+                lag -= self.frame_rate;
+            }
+
             self.world.late_update(delta_time);
-            self.engine.render(&mut self.world.world, delta_time)?;
+            self.engine.render(
+                &mut self.world.world,
+                delta_time as f32 / self.frame_rate as f32,
+            )?;
 
             self.window.swap_buffers();
         }

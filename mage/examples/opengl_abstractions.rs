@@ -99,7 +99,7 @@ impl Engine for GameEngine {
         Ok(())
     }
 
-    fn render(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
+    fn render(&self, _world: &mut World, _delta_time: f32) -> Result<(), MageError> {
         clear(&vec![DrawingBuffer::Color]);
         self.program.use_program();
         self.rendering_mesh.draw();
