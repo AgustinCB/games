@@ -1,4 +1,5 @@
-use nalgebra::{Matrix4, Rotation3, Scale3, Translation3, Vector3};
+use nalgebra::{Matrix4, Scale3, Translation3, Vector3};
+use rapier3d::math::Rotation;
 
 pub mod engine;
 pub mod model;
@@ -7,7 +8,7 @@ pub mod opengl;
 #[derive(Clone, Debug)]
 pub struct Transform {
     pub position: Vector3<f32>,
-    pub rotation: Rotation3<f32>,
+    pub rotation: Rotation<f32>,
     pub scale: Vector3<f32>,
 }
 
@@ -15,7 +16,7 @@ impl Transform {
     pub fn identity() -> Transform {
         Transform {
             position: Vector3::new(0f32, 0f32, 0f32),
-            rotation: Rotation3::identity(),
+            rotation: Rotation::identity(),
             scale: Vector3::new(1f32, 1f32, 1f32),
         }
     }
@@ -38,7 +39,7 @@ impl TransformBuilder {
         }
     }
 
-    pub fn with_rotation(&self, rotation: Rotation3<f32>) -> TransformBuilder {
+    pub fn with_rotation(&self, rotation: Rotation<f32>) -> TransformBuilder {
         let mut transform = self.transform.clone();
         transform.rotation = rotation;
         TransformBuilder { transform }

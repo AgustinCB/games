@@ -14,7 +14,7 @@ use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::{clear, set_clear_color, DrawingBuffer};
 use mage::MageError;
 
-const VERTEX_SHADER: &'static str = "#version 330 core
+const VERTEX_SHADER: &str = "#version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
@@ -30,7 +30,7 @@ void main()
     TexCoord = vec2(aTexCoord.x, aTexCoord.y);
 }";
 
-const FRAGMENT_SHADER: &'static str = "#version 330 core
+const FRAGMENT_SHADER: &str = "#version 330 core
 out vec4 FragColor;
 
 in vec3 ourColor;
@@ -100,7 +100,7 @@ impl Engine for GameEngine {
     }
 
     fn render(&self, _world: &mut World, _delta_time: f32) -> Result<(), MageError> {
-        clear(&vec![DrawingBuffer::Color]);
+        clear(&[DrawingBuffer::Color]);
         self.program.use_program();
         self.rendering_mesh.draw();
         Ok(())

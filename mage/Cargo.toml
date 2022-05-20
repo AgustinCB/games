@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+approx = "0.5.1"
 gl = "0.14.0"
 hecs = "0.7.6"
 image = "0.24.0"

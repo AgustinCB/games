@@ -6,20 +6,23 @@ use crate::gameplay::quit::{QuitControl, QuitSystem};
 use crate::rendering::engine::Engine;
 use crate::MageError;
 use hecs::{Component, DynamicBundle, Entity};
+use rapier3d::dynamics::RigidBody;
+use rapier3d::geometry::Collider;
+use rapier3d::pipeline::{EventHandler, PhysicsHooks};
 use sdl2::keyboard::Keycode;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-pub struct GameBuilder {
+pub struct GameBuilder<E: EventHandler, P: PhysicsHooks> {
     game_ended: Arc<AtomicBool>,
     window: Window,
-    world: World,
+    world: World<E, P>,
 }
 
-impl GameBuilder {
-    pub fn new(name: &str, width: u32, height: u32) -> Result<GameBuilder, MageError> {
+impl GameBuilder<(), ()> {
+    pub fn new(name: &str, width: u32, height: u32) -> Result<GameBuilder<(), ()>, MageError> {
         let world = World::new();
         let window = Window::new(name, width, height)?;
         Ok(GameBuilder {
@@ -28,8 +31,10 @@ impl GameBuilder {
             world,
         })
     }
+}
 
-    pub fn build<E: Engine>(self, engine: E) -> Game<E> {
+impl<E: EventHandler, P: PhysicsHooks> GameBuilder<E, P> {
+    pub fn build<N: Engine>(self, engine: N) -> Game<N, E, P> {
         Game {
             engine,
             frame_rate: 1000 / 60, // 60 frames per second
@@ -40,15 +45,15 @@ impl GameBuilder {
     }
 }
 
-pub struct Game<E: Engine> {
-    engine: E,
+pub struct Game<N: Engine, E: EventHandler, P: PhysicsHooks> {
+    engine: N,
     frame_rate: u64,
     game_ended: Arc<AtomicBool>,
     window: Window,
-    world: World,
+    world: World<E, P>,
 }
 
-impl<E: Engine> Game<E> {
+impl<N: Engine, E: EventHandler, P: PhysicsHooks> Game<N, E, P> {
     pub fn spawn(&mut self, components: impl DynamicBundle) -> Entity {
         self.world.get_mut().spawn(components)
     }
@@ -59,6 +64,14 @@ impl<E: Engine> Game<E> {
             .insert_one(entity, component)
             .map_err(Box::new)?;
         Ok(())
+    }
+
+    pub fn add_collider(&mut self, entity: Entity, collider: Collider) {
+        self.world.physics_engine.add_collider(entity, collider);
+    }
+
+    pub fn add_rigidbody(&mut self, entity: Entity, rigidbody: RigidBody) {
+        self.world.physics_engine.add_rigidbody(entity, rigidbody);
     }
 
     pub fn play(&mut self, systems: Vec<Box<dyn System>>) -> Result<(), MageError> {

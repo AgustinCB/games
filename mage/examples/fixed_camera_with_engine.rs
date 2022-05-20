@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use nalgebra::{Rotation, Vector3};
+use nalgebra::Vector3;
+use rapier3d::math::Rotation;
 use russimp::texture::TextureType;
 
 use mage::core::game::GameBuilder;

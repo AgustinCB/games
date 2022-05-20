@@ -2,17 +2,18 @@ use hecs::Entity;
 use nalgebra::Vector3;
 use rapier3d::dynamics::{
     CCDSolver, ImpulseJointSet, IntegrationParameters, IslandManager, MultibodyJointSet, RigidBody,
-    RigidBodySet,
+    RigidBodyHandle, RigidBodySet,
 };
-use rapier3d::geometry::{BroadPhase, Collider, ColliderSet, NarrowPhase};
+use rapier3d::geometry::{BroadPhase, Collider, ColliderHandle, ColliderSet, NarrowPhase};
 use rapier3d::pipeline::{EventHandler, PhysicsHooks, PhysicsPipeline};
 use std::collections::HashMap;
 
 pub struct PhysicsEngine<E: EventHandler, P: PhysicsHooks> {
     broad_phase: BroadPhase,
     ccd_solver: CCDSolver,
+    collider_scale: HashMap<ColliderHandle, Vector3<f32>>,
     collider_set: ColliderSet,
-    colliders: HashMap<Entity, Collider>,
+    colliders: HashMap<ColliderHandle, Entity>,
     event_handler: E,
     gravity: Vector3<f32>,
     impulse_joins: ImpulseJointSet,
@@ -22,7 +23,7 @@ pub struct PhysicsEngine<E: EventHandler, P: PhysicsHooks> {
     narrow_phase: NarrowPhase,
     physics_hooks: P,
     physics_pipeline: PhysicsPipeline,
-    rigidbodies: HashMap<Entity, RigidBody>,
+    rigidbodies: HashMap<RigidBodyHandle, Entity>,
     rigidbody_set: RigidBodySet,
 }
 
@@ -31,6 +32,7 @@ impl<E: EventHandler, P: PhysicsHooks> PhysicsEngine<E, P> {
         PhysicsEngine {
             broad_phase: BroadPhase::default(),
             ccd_solver: CCDSolver::default(),
+            collider_scale: HashMap::new(),
             collider_set: ColliderSet::new(),
             colliders: HashMap::new(),
             event_handler: handler,
@@ -47,20 +49,53 @@ impl<E: EventHandler, P: PhysicsHooks> PhysicsEngine<E, P> {
         }
     }
 
-    pub fn iter_mut_colliders(&mut self) -> impl Iterator<Item = &mut Collider> {
-        self.colliders.values_mut()
+    pub fn iter_colliders(&self) -> impl Iterator<Item = (Entity, &Collider)> {
+        self.collider_set
+            .iter()
+            .map(|(h, c)| (*self.colliders.get(&h).unwrap(), c))
     }
 
-    pub fn iter_mut_rigidbody(&mut self) -> impl Iterator<Item = &mut RigidBody> {
-        self.rigidbodies.values_mut()
+    pub fn iter_rigidbody(&self) -> impl Iterator<Item = (Entity, &RigidBody)> {
+        self.rigidbody_set
+            .iter()
+            .map(|(h, r)| (*self.rigidbodies.get(&h).unwrap(), r))
+    }
+
+    pub fn iter_mut_colliders(
+        &mut self,
+    ) -> impl Iterator<Item = (Entity, &mut Collider, ColliderHandle, Vector3<f32>)> {
+        self.collider_set.iter_mut().map(|(h, c)| {
+            (
+                *self.colliders.get(&h).unwrap(),
+                c,
+                h,
+                *self.collider_scale.get(&h).unwrap(),
+            )
+        })
+    }
+
+    pub fn iter_mut_rigidbody(&mut self) -> impl Iterator<Item = (Entity, &mut RigidBody)> {
+        self.rigidbody_set
+            .iter_mut()
+            .map(|(h, r)| (*self.rigidbodies.get(&h).unwrap(), r))
     }
 
     pub fn add_collider(&mut self, entity: Entity, collider: Collider) {
-        self.colliders.insert(entity, collider);
+        let handle = self.collider_set.insert(collider);
+        self.colliders.insert(handle, entity);
+        self.collider_scale
+            .insert(handle, Vector3::new(1.0, 1.0, 1.0));
     }
 
     pub fn add_rigidbody(&mut self, entity: Entity, rigidbody: RigidBody) {
-        self.rigidbodies.insert(entity, rigidbody);
+        let handle = self.rigidbody_set.insert(rigidbody);
+        self.rigidbodies.insert(handle, entity);
+    }
+
+    pub fn set_scales(&mut self, scales: Vec<(ColliderHandle, Vector3<f32>)>) {
+        for (handle, scale) in scales {
+            self.collider_scale.insert(handle, scale);
+        }
     }
 
     pub fn step(&mut self) {
