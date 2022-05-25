@@ -9,14 +9,18 @@ use crate::rendering::Transform;
 use crate::resources::shader::ShaderLoader;
 use crate::MageError;
 use hecs::World;
+use log::debug;
 use nalgebra::{Matrix4, Vector3, Vector4};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 const VERTEX_SHADER: &str = "simple-rendering-vertex.glsl";
 const FRAGMENT_SHADER: &str = "simple-rendering-fragment.glsl";
+const DEBUG_ITERATION: usize = 100;
 
 pub struct SimpleEngine<C: Camera> {
     camera: C,
     clear_color: Vector3<f32>,
+    iteration: AtomicUsize,
     program: Program,
     uniform_buffer: Buffer,
 }
@@ -37,6 +41,7 @@ impl<C: Camera> SimpleEngine<C> {
         Ok(SimpleEngine {
             camera,
             clear_color,
+            iteration: AtomicUsize::new(0),
             program,
             uniform_buffer,
         })
@@ -60,11 +65,11 @@ impl<C: Camera> Engine for SimpleEngine<C> {
     fn setup(&self, world: &mut World) -> Result<(), MageError> {
         enable(Feature::Depth);
         let mut rendering_mesh = vec![];
-        for (_e, (mesh, transform)) in world.query_mut::<(&Mesh, &Transform)>() {
-            rendering_mesh.push((mesh.to_rendering_mesh()?, transform.clone()));
+        for (e, mesh) in world.query_mut::<&Mesh>() {
+            rendering_mesh.push((e, mesh.to_rendering_mesh()?));
         }
-        for (rendering_mesh, transform) in rendering_mesh {
-            world.spawn((rendering_mesh, transform));
+        for (e, rendering_mesh) in rendering_mesh {
+            world.insert_one(e, rendering_mesh)?;
         }
         set_clear_color(Vector4::new(
             self.clear_color.x,
@@ -79,12 +84,21 @@ impl<C: Camera> Engine for SimpleEngine<C> {
         clear(&[DrawingBuffer::Color, DrawingBuffer::Depth]);
         self.program.use_program();
         self.setup_globals();
-        for (_e, (mesh, transform)) in world.query_mut::<(&RenderingMesh, &Transform)>() {
+        for (_e, (mesh, transform)) in world.query::<(&RenderingMesh, &Transform)>().iter() {
+            if self.iteration.load(Ordering::Relaxed) % DEBUG_ITERATION == 0 {
+                debug!(
+                    "MODEL {:?} {:?} {:?}",
+                    _e,
+                    transform,
+                    world.query_one::<&Transform>(_e)?.get()
+                );
+            }
             mesh.attach_to_program(&self.program);
             self.program
                 .set_uniform_matrix4("model", transform.get_model_matrix());
             mesh.draw();
         }
+        self.iteration.fetch_add(1, Ordering::Relaxed);
         Ok(())
     }
 }

@@ -40,6 +40,7 @@ pub enum OpenGlType {
 #[derive(Clone, Copy, Debug)]
 pub enum DrawingMode {
     Triangles = gl::TRIANGLES,
+    TriangleStrip = gl::TRIANGLE_STRIP,
 }
 
 #[repr(u32)]

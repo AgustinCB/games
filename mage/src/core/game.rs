@@ -74,6 +74,17 @@ impl<N: Engine, E: EventHandler, P: PhysicsHooks> Game<N, E, P> {
         self.world.physics_engine.add_rigidbody(entity, rigidbody);
     }
 
+    pub fn add_collider_and_rigidbody(
+        &mut self,
+        entity: Entity,
+        collider: Collider,
+        rigidbody: RigidBody,
+    ) {
+        self.world
+            .physics_engine
+            .add_collider_and_rigidbody(entity, collider, rigidbody);
+    }
+
     pub fn play(&mut self, systems: Vec<Box<dyn System>>) -> Result<(), MageError> {
         self.spawn((
             Input::new(vec![InputType::Quit, InputType::Keyboard]),

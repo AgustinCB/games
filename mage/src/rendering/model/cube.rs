@@ -133,3 +133,20 @@ pub fn cube(textures: Vec<TextureInfo>) -> Mesh {
         vertices: VERTICES.to_vec(),
     }
 }
+
+pub fn cuboid(hx: f32, hy: f32, hz: f32, textures: Vec<TextureInfo>) -> Mesh {
+    let vertices = VERTICES
+        .iter()
+        .map(|v| Vector3::new(v.x * hx, v.y * hy, v.z * hz));
+    Mesh {
+        bitangents: None,
+        drawing_mode: DrawingMode::Triangles,
+        indices: None,
+        normals: Some(NORMALS.to_vec()),
+        shininess: None,
+        tangents: None,
+        textures: Some(textures),
+        texture_coordinates: Some(TEXTURE_COORDINATES.to_vec()),
+        vertices: vertices.collect(),
+    }
+}

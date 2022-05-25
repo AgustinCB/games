@@ -24,7 +24,7 @@ fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum TextureSource {
     File(String),
-    Color(Vector3<u32>),
+    Color(Vector3<u8>),
 }
 
 #[derive(Clone, Debug)]

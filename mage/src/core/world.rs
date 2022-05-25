@@ -63,6 +63,10 @@ impl<E: EventHandler, P: PhysicsHooks> World<E, P> {
                     .map_err(|s| format!("There was an error on {}: {}", system.name(), &s)),
             );
         }
+    }
+
+    pub fn update(&mut self, delta_time: u64) {
+        self.physics_engine.step();
 
         for (entity, r) in self.physics_engine.iter_rigidbody() {
             if let Some(transform) =
@@ -81,9 +85,6 @@ impl<E: EventHandler, P: PhysicsHooks> World<E, P> {
                 transform.rotation = *c.rotation();
             }
         }
-    }
-
-    pub fn update(&mut self, delta_time: u64) {
         for system in self.systems.iter() {
             handle_result(
                 system

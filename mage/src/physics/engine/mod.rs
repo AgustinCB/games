@@ -92,6 +92,23 @@ impl<E: EventHandler, P: PhysicsHooks> PhysicsEngine<E, P> {
         self.rigidbodies.insert(handle, entity);
     }
 
+    pub fn add_collider_and_rigidbody(
+        &mut self,
+        entity: Entity,
+        collider: Collider,
+        rigidbody: RigidBody,
+    ) {
+        let body_handle = self.rigidbody_set.insert(rigidbody);
+        self.rigidbodies.insert(body_handle, entity);
+
+        let collider_handle =
+            self.collider_set
+                .insert_with_parent(collider, body_handle, &mut self.rigidbody_set);
+        self.colliders.insert(collider_handle, entity);
+        self.collider_scale
+            .insert(collider_handle, Vector3::new(1.0, 1.0, 1.0));
+    }
+
     pub fn set_scales(&mut self, scales: Vec<(ColliderHandle, Vector3<f32>)>) {
         for (handle, scale) in scales {
             self.collider_scale.insert(handle, scale);

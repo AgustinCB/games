@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use image::io::Reader;
-use image::EncodableLayout;
+use image::{EncodableLayout, Rgb, RgbImage};
 
 use crate::rendering::model::mesh::{TextureInfo, TextureSource};
 use crate::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat};
@@ -60,7 +60,16 @@ impl TextureLoader {
                         }
                     };
                 }
-                TextureSource::Color(_color) => unimplemented!(),
+                TextureSource::Color(color) => {
+                    let mut image = RgbImage::new(1, 1);
+                    image.put_pixel(0, 0, Rgb([color.x, color.y, color.z]));
+                    texture.set_image_2d(
+                        image.width() as u32,
+                        image.height() as u32,
+                        image.as_bytes(),
+                        TextureFormat::UnsignedByte,
+                    );
+                }
             };
             self.textures
                 .insert(texture_info.source.clone(), texture.clone());
