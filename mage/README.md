@@ -40,3 +40,7 @@ not publish it as a crate nor provide support for it.
 
 - **`crate::resources`**: Resource logic loading. From shader program content, to full on models, passing through
   textures, fonts, and sounds.
+
+- **`crate::physics`**: This section contains all the logics related with game physics, including the `PhysicsEngine`.
+
+- **`crate::gameplay`**: This section contains all gameplay logics, including cameras and input management.
