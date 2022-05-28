@@ -24,6 +24,10 @@ impl Transform {
     pub fn get_model_matrix(&self) -> Matrix4<f32> {
         let t = Translation3::from(self.position);
         let s = Scale3::from(self.scale);
+        eprintln!(
+            "{:?}",
+            t.to_homogeneous() * self.rotation.to_homogeneous() * s.to_homogeneous()
+        );
         t.to_homogeneous() * self.rotation.to_homogeneous() * s.to_homogeneous()
     }
 }
