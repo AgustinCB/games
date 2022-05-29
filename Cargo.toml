@@ -1,2 +1,2 @@
 [workspace]
-members = ["mage"]
+members = ["breakout", "mage"]
