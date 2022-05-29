@@ -6,6 +6,8 @@ pub struct Fixed2dCameraBuilder {
     to: Point2<f32>,
     front: Option<UnitVector3<f32>>,
     world_up: Option<UnitVector3<f32>>,
+    z_near: Option<f32>,
+    z_far: Option<f32>,
 }
 
 impl Fixed2dCameraBuilder {
@@ -15,6 +17,8 @@ impl Fixed2dCameraBuilder {
             to,
             front: None,
             world_up: None,
+            z_far: None,
+            z_near: None,
         }
     }
 
@@ -27,9 +31,15 @@ impl Fixed2dCameraBuilder {
     }
 
     pub fn build(&self) -> Fixed2dCamera {
-        let projection =
-            Orthographic3::new(self.from.x, self.to.x, self.from.y, self.to.y, 0.1, 1000f32)
-                .to_homogeneous();
+        let projection = Orthographic3::new(
+            self.from.x,
+            self.to.x,
+            self.from.y,
+            self.to.y,
+            self.z_near.unwrap_or(-1.0),
+            self.z_far.unwrap_or(1.0),
+        )
+        .to_homogeneous();
         let front = self.front.unwrap_or(-Vector3::z_axis());
         let world_up = self.world_up.unwrap_or_else(Vector3::y_axis);
         let right = UnitVector3::new_normalize(front.cross(&world_up));

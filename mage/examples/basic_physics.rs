@@ -75,8 +75,8 @@ pub fn main() {
             ]),
         }],
     );
-    let sphere_position = Vector3::new(0.0, 4.5, -2.0);
-    let floor_position = Vector3::new(0.0, -4f32, -2.0);
+    let sphere_position = Vector3::new(0.0, 4.5, 0.0);
+    let floor_position = Vector3::new(0.0, -4f32, 0.0);
     let sphere_transform = TransformBuilder::new()
         .with_position(sphere_position)
         .build();
