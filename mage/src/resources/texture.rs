@@ -2,18 +2,21 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use image::io::Reader;
-use image::{EncodableLayout, Rgb, RgbImage};
+use image::{DynamicImage, EncodableLayout, Pixel, Rgb, RgbImage, Rgba};
 
 use crate::rendering::model::mesh::{TextureInfo, TextureSource};
 use crate::rendering::opengl::texture::{Texture, TextureDimension, TextureFormat};
 use crate::MageError;
+
+fn load_image_to_texture(path: &str) -> Result<DynamicImage, MageError> {
+    Ok(Reader::open(path)?.decode()?.flipv())
+}
 
 pub struct TextureLoader {
     textures: HashMap<TextureSource, Arc<Texture>>,
 }
 
 impl TextureLoader {
-    #[allow(clippy::new_without_default)]
     pub fn new() -> TextureLoader {
         TextureLoader {
             textures: HashMap::new(),
@@ -39,7 +42,7 @@ impl TextureLoader {
             texture.bind(texture_info.id as _);
             match &texture_info.source {
                 TextureSource::File(path) => {
-                    let image = Reader::open(path)?.decode()?.flipv();
+                    let image = load_image_to_texture(path)?;
                     match TextureFormat::try_from(image.color()) {
                         Ok(format) => {
                             texture.set_image_2d(
@@ -70,6 +73,20 @@ impl TextureLoader {
                         TextureFormat::UnsignedByte,
                     );
                 }
+                TextureSource::ColoredFile(path, color) => {
+                    let mut image = load_image_to_texture(path)?.to_rgba8();
+                    image.enumerate_pixels_mut().for_each(|(_, _, p)| {
+                        #[allow(deprecated)]
+                        let (r, g, b, a) = p.channels4();
+                        *p = Rgba([r * color[0], g * color[1], b * color[2], a * color[3]]);
+                    });
+                    texture.set_image_2d(
+                        image.width() as u32,
+                        image.height() as u32,
+                        image.as_bytes(),
+                        TextureFormat::UnsignedByteWithAlpha,
+                    );
+                }
             };
             self.textures
                 .insert(texture_info.source.clone(), texture.clone());
@@ -79,5 +96,11 @@ impl TextureLoader {
             texture.generate_mipmap();
             Ok(texture)
         }
+    }
+}
+
+impl Default for TextureLoader {
+    fn default() -> TextureLoader {
+        TextureLoader::new()
     }
 }

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use itertools::multizip;
-use nalgebra::{ArrayStorage, Matrix, Vector2, Vector3, U1};
-use russimp::texture::TextureType;
+use nalgebra::{ArrayStorage, Matrix, Vector2, Vector3, Vector4, U1};
+pub use russimp::texture::TextureType;
 
 use crate::rendering::opengl::buffer::{Buffer, BufferType, BufferUsage};
 use crate::rendering::opengl::program::Program;
@@ -25,6 +25,7 @@ fn flattened_vectors(vectors: &[Vector3<f32>]) -> Vec<f32> {
 pub enum TextureSource {
     File(String),
     Color(Vector3<u8>),
+    ColoredFile(String, Vector4<u8>),
 }
 
 #[derive(Clone, Debug)]
