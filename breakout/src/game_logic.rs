@@ -2,6 +2,7 @@ use crate::level::Level;
 use crate::GameTextures;
 use hecs::World;
 use mage::core::system::System;
+use mage::resources::texture::TextureLoader;
 use mage::MageError;
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
@@ -27,21 +28,24 @@ impl From<u32> for GameState {
 }
 
 pub(crate) struct GameLogic {
-    _game_textures: GameTextures,
+    game_textures: GameTextures,
     _height: u32,
     level: usize,
     levels: Vec<Level>,
     _state: Arc<AtomicU32>,
+    texture_loader: Arc<TextureLoader>,
     _width: u32,
 }
 impl GameLogic {
     pub(crate) fn new(
+        texture_loader: Arc<TextureLoader>,
         game_textures: GameTextures,
         height: u32,
         width: u32,
     ) -> Result<GameLogic, MageError> {
         Ok(GameLogic {
-            _game_textures: game_textures,
+            game_textures,
+            texture_loader,
             _height: height,
             _width: width,
             level: 0,
@@ -62,7 +66,23 @@ impl System for GameLogic {
         "Game Logic"
     }
 
-    fn start(&self, world: &mut hecs::World) -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    fn start(&self, world: &mut hecs::World) -> Result<(), MageError> {
+        self.texture_loader
+            .load_texture_2d(&self.game_textures.background)?;
+        self.texture_loader
+            .load_texture_2d(&self.game_textures.ball)?;
+        self.texture_loader
+            .load_texture_2d(&self.game_textures.block_solid)?;
+        self.texture_loader
+            .load_texture_2d(&self.game_textures.blue_block)?;
+        self.texture_loader
+            .load_texture_2d(&self.game_textures.green_block)?;
+        self.texture_loader
+            .load_texture_2d(&self.game_textures.orange_block)?;
+        self.texture_loader
+            .load_texture_2d(&self.game_textures.white_block)?;
+        self.texture_loader
+            .load_texture_2d(&self.game_textures.yellow_block)?;
         self.load_level(world);
         Ok(())
     }

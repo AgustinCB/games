@@ -14,14 +14,14 @@ pub(crate) mod level;
 
 #[derive(Clone)]
 pub(crate) struct GameTextures {
-    pub(crate) _background: TextureInfo,
-    pub(crate) _ball: TextureInfo,
-    pub(crate) _block_solid: TextureInfo,
-    pub(crate) _blue_block: TextureInfo,
-    pub(crate) _green_block: TextureInfo,
-    pub(crate) _orange_block: TextureInfo,
-    pub(crate) _white_block: TextureInfo,
-    pub(crate) _yellow_block: TextureInfo,
+    pub(crate) background: TextureInfo,
+    pub(crate) ball: TextureInfo,
+    pub(crate) block_solid: TextureInfo,
+    pub(crate) blue_block: TextureInfo,
+    pub(crate) green_block: TextureInfo,
+    pub(crate) orange_block: TextureInfo,
+    pub(crate) white_block: TextureInfo,
+    pub(crate) yellow_block: TextureInfo,
 }
 
 impl GameTextures {
@@ -44,19 +44,19 @@ impl GameTextures {
             TextureParameterValue::Linear,
         );
         Ok(GameTextures {
-            _background: TextureInfo {
+            background: TextureInfo {
                 id: 0,
                 parameters: parameters.clone(),
                 source: TextureSource::File("resources/textures/background.jpg".to_owned()),
                 texture_type: TextureType::Diffuse,
             },
-            _ball: TextureInfo {
+            ball: TextureInfo {
                 id: 0,
                 parameters: parameters.clone(),
                 source: TextureSource::File("resources/textures/awesomeface.png".to_owned()),
                 texture_type: TextureType::Diffuse,
             },
-            _block_solid: TextureInfo {
+            block_solid: TextureInfo {
                 id: 0,
                 parameters: parameters.clone(),
                 source: TextureSource::ColoredFile(
@@ -65,7 +65,7 @@ impl GameTextures {
                 ),
                 texture_type: TextureType::Diffuse,
             },
-            _blue_block: TextureInfo {
+            blue_block: TextureInfo {
                 id: 0,
                 parameters: parameters.clone(),
                 source: TextureSource::ColoredFile(
@@ -74,7 +74,7 @@ impl GameTextures {
                 ),
                 texture_type: TextureType::Diffuse,
             },
-            _green_block: TextureInfo {
+            green_block: TextureInfo {
                 id: 0,
                 parameters: parameters.clone(),
                 source: TextureSource::ColoredFile(
@@ -83,7 +83,7 @@ impl GameTextures {
                 ),
                 texture_type: TextureType::Diffuse,
             },
-            _orange_block: TextureInfo {
+            orange_block: TextureInfo {
                 id: 0,
                 parameters: parameters.clone(),
                 source: TextureSource::ColoredFile(
@@ -92,7 +92,7 @@ impl GameTextures {
                 ),
                 texture_type: TextureType::Diffuse,
             },
-            _white_block: TextureInfo {
+            white_block: TextureInfo {
                 id: 0,
                 parameters: parameters.clone(),
                 source: TextureSource::ColoredFile(
@@ -101,7 +101,7 @@ impl GameTextures {
                 ),
                 texture_type: TextureType::Diffuse,
             },
-            _yellow_block: TextureInfo {
+            yellow_block: TextureInfo {
                 id: 0,
                 parameters: parameters.clone(),
                 source: TextureSource::ColoredFile(
@@ -120,11 +120,11 @@ fn main() {
     let texture_loader = Arc::new(TextureLoader::new());
     let camera =
         Fixed2dCameraBuilder::new(Point2::new(0.0, 0.0), Point2::new(800.0, 600.0)).build();
-    let mut game = GameBuilder::new("Breakout", 800, 600)
-        .unwrap()
-        .build(SimpleEngine::new(camera, Vector3::new(0.0, 0.0, 0.0), texture_loader).unwrap());
+    let mut game = GameBuilder::new("Breakout", 800, 600).unwrap().build(
+        SimpleEngine::new(camera, Vector3::new(0.0, 0.0, 0.0), texture_loader.clone()).unwrap(),
+    );
     game.play(vec![Box::new(
-        game_logic::GameLogic::new(textures, 800, 600).unwrap(),
+        game_logic::GameLogic::new(texture_loader, textures, 800, 600).unwrap(),
     )])
     .unwrap();
 }
