@@ -7,11 +7,13 @@ use crate::rendering::opengl::shader::ShaderType;
 use crate::rendering::opengl::{clear, enable, set_clear_color, DrawingBuffer, Feature};
 use crate::rendering::Transform;
 use crate::resources::shader::ShaderLoader;
+use crate::resources::texture::TextureLoader;
 use crate::MageError;
 use hecs::World;
 use log::debug;
 use nalgebra::{Matrix4, Vector3, Vector4};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 const VERTEX_SHADER: &str = "simple-rendering-vertex.glsl";
 const FRAGMENT_SHADER: &str = "simple-rendering-fragment.glsl";
@@ -22,11 +24,16 @@ pub struct SimpleEngine<C: Camera> {
     clear_color: Vector3<f32>,
     iteration: AtomicUsize,
     program: Program,
+    texture_loader: Arc<TextureLoader>,
     uniform_buffer: Buffer,
 }
 
 impl<C: Camera> SimpleEngine<C> {
-    pub fn new(camera: C, clear_color: Vector3<f32>) -> Result<SimpleEngine<C>, MageError> {
+    pub fn new(
+        camera: C,
+        clear_color: Vector3<f32>,
+        texture_loader: Arc<TextureLoader>,
+    ) -> Result<SimpleEngine<C>, MageError> {
         let shader_loader = ShaderLoader::new(&SHADER_LIBRARY)?;
         let program = Program::new(
             shader_loader.load(ShaderType::Vertex, VERTEX_SHADER)?,
@@ -39,10 +46,11 @@ impl<C: Camera> SimpleEngine<C> {
         uniform_buffer.unbind();
         uniform_buffer.link_to_binding_point(0, 0, buffer_size);
         Ok(SimpleEngine {
+            iteration: AtomicUsize::new(0),
             camera,
             clear_color,
-            iteration: AtomicUsize::new(0),
             program,
+            texture_loader,
             uniform_buffer,
         })
     }
@@ -66,7 +74,7 @@ impl<C: Camera> Engine for SimpleEngine<C> {
         enable(Feature::Depth);
         let mut rendering_mesh = vec![];
         for (e, mesh) in world.query_mut::<&Mesh>() {
-            rendering_mesh.push((e, mesh.to_rendering_mesh()?));
+            rendering_mesh.push((e, mesh.to_rendering_mesh(self.texture_loader.clone())?));
         }
         for (e, rendering_mesh) in rendering_mesh {
             world.insert_one(e, rendering_mesh)?;

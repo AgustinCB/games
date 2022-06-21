@@ -3,9 +3,11 @@ use mage::gameplay::camera::Fixed2dCameraBuilder;
 use mage::rendering::engine::SimpleEngine;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource, TextureType};
 use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
+use mage::resources::texture::TextureLoader;
 use mage::MageError;
 use nalgebra::{Point2, Vector3, Vector4};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 mod game_logic;
 pub(crate) mod level;
@@ -115,11 +117,12 @@ impl GameTextures {
 fn main() {
     env_logger::init();
     let textures = GameTextures::new().unwrap();
+    let texture_loader = Arc::new(TextureLoader::new());
     let camera =
         Fixed2dCameraBuilder::new(Point2::new(0.0, 0.0), Point2::new(800.0, 600.0)).build();
     let mut game = GameBuilder::new("Breakout", 800, 600)
         .unwrap()
-        .build(SimpleEngine::new(camera, Vector3::new(0.0, 0.0, 0.0)).unwrap());
+        .build(SimpleEngine::new(camera, Vector3::new(0.0, 0.0, 0.0), texture_loader).unwrap());
     game.play(vec![Box::new(
         game_logic::GameLogic::new(textures, 800, 600).unwrap(),
     )])

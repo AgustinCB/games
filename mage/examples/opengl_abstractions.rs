@@ -12,7 +12,9 @@ use mage::rendering::opengl::program::Program;
 use mage::rendering::opengl::shader::{Shader, ShaderType};
 use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::{clear, set_clear_color, DrawingBuffer};
+use mage::resources::texture::TextureLoader;
 use mage::MageError;
+use std::sync::Arc;
 
 const VERTEX_SHADER: &str = "#version 330 core
 layout (location = 0) in vec3 aPos;
@@ -83,7 +85,8 @@ impl GameEngine {
         }]);
         program.use_program();
         program.set_uniform_i1("texture1", 0);
-        let rendering_mesh = quad.to_rendering_mesh()?;
+        let loader = Arc::new(TextureLoader::new());
+        let rendering_mesh = quad.to_rendering_mesh(loader)?;
         program.use_program();
         rendering_mesh.attach_to_program(&program);
         Ok(GameEngine {

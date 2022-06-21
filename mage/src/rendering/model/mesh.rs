@@ -58,7 +58,10 @@ impl Mesh {
         }
     }
 
-    pub fn to_rendering_mesh(&self) -> Result<RenderingMesh, MageError> {
+    pub fn to_rendering_mesh(
+        &self,
+        loader: Arc<TextureLoader>,
+    ) -> Result<RenderingMesh, MageError> {
         let size = self.size() as u32;
         let mut attribute = 0;
         let mut start = 0;
@@ -134,7 +137,6 @@ impl Mesh {
         let mut textures = vec![];
 
         if let Some(texture_infos) = &self.textures {
-            let mut loader = TextureLoader::new();
             for texture_info in texture_infos.iter() {
                 textures.push(loader.load_texture_2d(texture_info)?);
             }
@@ -341,5 +343,13 @@ impl RenderingMesh {
         }
         let shininess = self.mesh.shininess.unwrap_or(64f32);
         program.set_uniform_f1("material.shininess", shininess);
+    }
+
+    pub fn clone_with_textures(
+        &self,
+        _textures: Vec<TextureInfo>,
+        _texture_loader: &mut TextureLoader,
+    ) {
+        todo!();
     }
 }

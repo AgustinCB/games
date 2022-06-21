@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use image::io::Reader;
 use image::{DynamicImage, EncodableLayout, Pixel, Rgb, RgbImage, Rgba};
@@ -13,29 +13,27 @@ fn load_image_to_texture(path: &str) -> Result<DynamicImage, MageError> {
 }
 
 pub struct TextureLoader {
-    textures: HashMap<TextureSource, Arc<Texture>>,
+    textures: Mutex<HashMap<TextureSource, Arc<Texture>>>,
 }
 
 impl TextureLoader {
     pub fn new() -> TextureLoader {
         TextureLoader {
-            textures: HashMap::new(),
+            textures: Mutex::new(HashMap::new()),
         }
     }
 
-    pub fn load_texture_cubemap(&mut self, texture_info: &TextureInfo) -> Arc<Texture> {
-        if let Some(source) = self.textures.get(&texture_info.source) {
+    pub fn load_texture_cubemap(&self, texture_info: &TextureInfo) -> Arc<Texture> {
+        if let Some(source) = self.textures.lock().unwrap().get(&texture_info.source) {
             source.clone()
         } else {
             todo!()
         }
     }
 
-    pub fn load_texture_2d(
-        &mut self,
-        texture_info: &TextureInfo,
-    ) -> Result<Arc<Texture>, MageError> {
-        if let Some(source) = self.textures.get(&texture_info.source) {
+    pub fn load_texture_2d(&self, texture_info: &TextureInfo) -> Result<Arc<Texture>, MageError> {
+        let mut textures = self.textures.lock().unwrap();
+        if let Some(source) = textures.get(&texture_info.source) {
             Ok(source.clone())
         } else {
             let texture = Arc::new(Texture::new(TextureDimension::Texture2D));
@@ -88,8 +86,7 @@ impl TextureLoader {
                     );
                 }
             };
-            self.textures
-                .insert(texture_info.source.clone(), texture.clone());
+            textures.insert(texture_info.source.clone(), texture.clone());
             for (&k, &v) in &texture_info.parameters {
                 texture.set_parameter(k, v);
             }

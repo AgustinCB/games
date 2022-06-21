@@ -17,7 +17,9 @@ use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
 use mage::rendering::opengl::{clear, enable, set_clear_color, DrawingBuffer, Feature};
 use mage::rendering::TransformBuilder;
 use mage::resources::shader::ShaderLoader;
+use mage::resources::texture::TextureLoader;
 use mage::MageError;
+use std::sync::Arc;
 
 static SHADER_DIR: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/examples/resources/shaders");
 
@@ -74,7 +76,8 @@ impl GameEngine {
         );
         program.set_uniform_matrix4("view", camera.look_at_matrix());
         program.set_uniform_matrix4("projection", camera.projection());
-        let rendering_mesh = cube.to_rendering_mesh()?;
+        let loader = Arc::new(TextureLoader::new());
+        let rendering_mesh = cube.to_rendering_mesh(loader)?;
         program.use_program();
         rendering_mesh.attach_to_program(&program);
 
