@@ -44,15 +44,19 @@ impl GameLogic {
         width: u32,
     ) -> Result<GameLogic, MageError> {
         Ok(GameLogic {
+            level: 0,
+            levels: vec![Level::new(
+                include_bytes!("../resources/level1").iter().cloned(),
+                texture_loader.clone(),
+                &game_textures,
+                height,
+                width,
+            )?],
+            _state: Arc::new(AtomicU32::new(GameState::Active as _)),
             game_textures,
             texture_loader,
             _height: height,
             _width: width,
-            level: 0,
-            levels: vec![Level::new(
-                include_bytes!("../resources/level1").iter().cloned(),
-            )?],
-            _state: Arc::new(AtomicU32::new(GameState::Active as _)),
         })
     }
 

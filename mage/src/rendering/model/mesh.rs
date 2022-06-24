@@ -298,9 +298,15 @@ impl Mesh {
             })
             .collect::<Vec<f32>>()
     }
+
+    pub fn clone_with_textures(&self, textures: Vec<TextureInfo>) -> Mesh {
+        let mut mesh = self.clone();
+        mesh.textures = Some(textures);
+        mesh
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RenderingMesh {
     pub array_buffer: Arc<Buffer>,
     pub element_buffer: Option<Arc<Buffer>>,
@@ -347,9 +353,16 @@ impl RenderingMesh {
 
     pub fn clone_with_textures(
         &self,
-        _textures: Vec<TextureInfo>,
-        _texture_loader: &mut TextureLoader,
-    ) {
-        todo!();
+        loader: Arc<TextureLoader>,
+        texture_infos: Vec<TextureInfo>,
+    ) -> Result<RenderingMesh, MageError> {
+        let mut mesh = self.clone();
+        let mut textures = vec![];
+        for texture_info in texture_infos.iter() {
+            textures.push(loader.load_texture_2d(texture_info)?);
+        }
+        mesh.mesh = self.mesh.clone_with_textures(texture_infos);
+        mesh.textures = textures;
+        Ok(mesh)
     }
 }
