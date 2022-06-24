@@ -45,13 +45,43 @@ impl GameLogic {
     ) -> Result<GameLogic, MageError> {
         Ok(GameLogic {
             level: 0,
-            levels: vec![Level::new(
-                include_bytes!("../resources/level1").iter().cloned(),
-                texture_loader.clone(),
-                &game_textures,
-                height / 2,
-                width,
-            )?],
+            levels: vec![
+                Level::new(
+                    include_bytes!("../resources/level1").iter().cloned(),
+                    texture_loader.clone(),
+                    &game_textures,
+                    height / 2,
+                    width,
+                )?,
+                Level::new(
+                    include_bytes!("../resources/level2").iter().cloned(),
+                    texture_loader.clone(),
+                    &game_textures,
+                    height / 2,
+                    width,
+                )?,
+                Level::new(
+                    include_bytes!("../resources/level3").iter().cloned(),
+                    texture_loader.clone(),
+                    &game_textures,
+                    height / 2,
+                    width,
+                )?,
+                Level::new(
+                    include_bytes!("../resources/level4").iter().cloned(),
+                    texture_loader.clone(),
+                    &game_textures,
+                    height / 2,
+                    width,
+                )?,
+                Level::new(
+                    include_bytes!("../resources/level5").iter().cloned(),
+                    texture_loader.clone(),
+                    &game_textures,
+                    height / 2,
+                    width,
+                )?,
+            ],
             _state: Arc::new(AtomicU32::new(GameState::Active as _)),
             game_textures,
             texture_loader,
