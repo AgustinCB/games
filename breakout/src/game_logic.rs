@@ -40,8 +40,8 @@ impl GameLogic {
     pub(crate) fn new(
         texture_loader: Arc<TextureLoader>,
         game_textures: GameTextures,
-        height: u32,
         width: u32,
+        height: u32,
     ) -> Result<GameLogic, MageError> {
         Ok(GameLogic {
             level: 0,
@@ -49,7 +49,7 @@ impl GameLogic {
                 include_bytes!("../resources/level1").iter().cloned(),
                 texture_loader.clone(),
                 &game_textures,
-                height,
+                height / 2,
                 width,
             )?],
             _state: Arc::new(AtomicU32::new(GameState::Active as _)),
@@ -96,7 +96,7 @@ impl System for GameLogic {
         _: &mut hecs::World,
         _: u64,
     ) -> Result<(), Box<(dyn std::error::Error + 'static)>> {
-        todo!()
+        Ok(())
     }
 
     fn update(
@@ -104,7 +104,7 @@ impl System for GameLogic {
         _: &mut hecs::World,
         _: u64,
     ) -> Result<(), Box<(dyn std::error::Error + 'static)>> {
-        todo!()
+        Ok(())
     }
 
     fn late_update(

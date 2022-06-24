@@ -76,7 +76,18 @@ impl TextureLoader {
                     image.enumerate_pixels_mut().for_each(|(_, _, p)| {
                         #[allow(deprecated)]
                         let (r, g, b, a) = p.channels4();
-                        *p = Rgba([r * color[0], g * color[1], b * color[2], a * color[3]]);
+                        let (fr, fg, fb, fa) = (
+                            (r as f32 / 255.0) * color[0] as f32 / 255.0,
+                            (g as f32 / 255.0) * color[1] as f32 / 255.0,
+                            (b as f32 / 255.0) * color[2] as f32 / 255.0,
+                            (a as f32 / 255.0) * color[3] as f32 / 255.0,
+                        );
+                        *p = Rgba([
+                            (fr * 255.0) as u8,
+                            (fg * 255.0) as u8,
+                            (fb * 255.0) as u8,
+                            (fa * 255.0) as u8,
+                        ]);
                     });
                     texture.set_image_2d(
                         image.width() as u32,
