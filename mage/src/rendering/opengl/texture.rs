@@ -57,7 +57,7 @@ pub enum TextureParameterValue {
     MirrorClampToEdge = gl::MIRROR_CLAMP_TO_EDGE,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum TextureFormat {
     FloatingPoint,
     UnsignedByte,

@@ -150,3 +150,22 @@ pub fn cuboid(hx: f32, hy: f32, hz: f32, textures: Vec<TextureInfo>) -> Mesh {
         vertices: vertices.collect(),
     }
 }
+
+pub fn rectangle(hx: f32, hy: f32, textures: Vec<TextureInfo>) -> Mesh {
+    let vertices = VERTICES
+        .iter()
+        .take(6)
+        .map(|v| Vector3::new(v.x * hx, v.y * hy, 0.0));
+
+    Mesh {
+        bitangents: None,
+        drawing_mode: DrawingMode::Triangles,
+        indices: None,
+        normals: Some(NORMALS.iter().take(6).cloned().collect()),
+        shininess: None,
+        tangents: None,
+        textures: Some(textures),
+        texture_coordinates: Some(TEXTURE_COORDINATES.iter().take(6).cloned().collect()),
+        vertices: vertices.collect(),
+    }
+}

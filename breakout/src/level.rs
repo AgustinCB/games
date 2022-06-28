@@ -1,6 +1,6 @@
 use crate::GameTextures;
 use hecs::World;
-use mage::rendering::model::cube::cuboid;
+use mage::rendering::model::cube::rectangle;
 use mage::rendering::model::mesh::{RenderingMesh, TextureInfo};
 use mage::rendering::Transform;
 use mage::resources::texture::TextureLoader;
@@ -86,7 +86,7 @@ impl Level {
         let unit_width = width as f32 / rows as f32;
         let unit_height = height as f32 / cols as f32;
 
-        let mesh = cuboid(unit_width / 2.0, unit_height / 2.0, 0.1, vec![])
+        let mesh = rectangle(unit_width / 2.0, unit_height / 2.0, vec![])
             .to_rendering_mesh(texture_loader.clone())?;
         let mut current_cell = 0u8;
         for raw_brick in input {
@@ -124,7 +124,7 @@ impl Level {
                     transform.position = Vector3::new(
                         self.unit_width * x as f32 + self.unit_width / 2.0,
                         height - self.unit_height * y as f32 - self.unit_height / 2.0,
-                        0.0,
+                        1.0,
                     );
                     world.spawn((*brick, transform, mesh.clone()));
                 }

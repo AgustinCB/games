@@ -4,7 +4,7 @@ use crate::rendering::model::mesh::{Mesh, RenderingMesh};
 use crate::rendering::opengl::buffer::{Buffer, BufferType};
 use crate::rendering::opengl::program::Program;
 use crate::rendering::opengl::shader::ShaderType;
-use crate::rendering::opengl::{clear, enable, set_clear_color, DrawingBuffer, Feature};
+use crate::rendering::opengl::{clear, enable, set_clear_color, DrawingBuffer, Feature, blend_func, Factor};
 use crate::rendering::Transform;
 use crate::resources::shader::ShaderLoader;
 use crate::resources::texture::TextureLoader;
@@ -72,6 +72,8 @@ impl<C: Camera> SimpleEngine<C> {
 impl<C: Camera> Engine for SimpleEngine<C> {
     fn setup(&self, world: &mut World) -> Result<(), MageError> {
         enable(Feature::Depth);
+        enable(Feature::Blend);
+        blend_func(Factor::SrcAlpha, Factor::OneMinusSrcAlpha);
         let mut rendering_mesh = vec![];
         for (e, mesh) in world.query_mut::<&Mesh>() {
             rendering_mesh.push((e, mesh.to_rendering_mesh(self.texture_loader.clone())?));

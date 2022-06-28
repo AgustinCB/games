@@ -45,7 +45,24 @@ pub enum DrawingMode {
 
 #[repr(u32)]
 #[derive(Clone, Copy, Debug)]
+pub enum Factor {
+    Zero = gl::ZERO,
+    One = gl::ONE,
+    DstColor = gl::DST_COLOR,
+    SrcColor = gl::SRC_COLOR,
+    OneMinusDstColor = gl::ONE_MINUS_DST_COLOR,
+    OneMinusSrcColor = gl::ONE_MINUS_SRC_COLOR,
+    SrcAlpha = gl::SRC_ALPHA,
+    OneMinusSrcAlpha = gl::ONE_MINUS_SRC_ALPHA,
+    DstAlpha = gl::DST_ALPHA,
+    OneMinusDstAlpha = gl::ONE_MINUS_DST_ALPHA,
+    SrcAlphaSaturate = gl::SRC_ALPHA_SATURATE,
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug)]
 pub enum Feature {
+    Blend = gl::BLEND,
     Depth = gl::DEPTH_TEST,
 }
 
@@ -85,4 +102,8 @@ pub fn draw_elements(mode: DrawingMode, vertices: u32, indices_type: OpenGlType)
 
 pub fn enable(feature: Feature) {
     gl_function!(Enable(feature as _));
+}
+
+pub fn blend_func(src: Factor, dst: Factor) {
+    gl_function!(BlendFunc(src as _, dst as _));
 }
