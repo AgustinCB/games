@@ -1,19 +1,23 @@
-use crate::gameplay::camera::Camera;
-use crate::rendering::engine::{Engine, SHADER_LIBRARY};
-use crate::rendering::model::mesh::{Mesh, RenderingMesh};
-use crate::rendering::opengl::buffer::{Buffer, BufferType};
-use crate::rendering::opengl::program::Program;
-use crate::rendering::opengl::shader::ShaderType;
-use crate::rendering::opengl::{clear, enable, set_clear_color, DrawingBuffer, Feature, blend_func, Factor};
-use crate::rendering::Transform;
-use crate::resources::shader::ShaderLoader;
-use crate::resources::texture::TextureLoader;
-use crate::MageError;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use hecs::World;
 use log::debug;
 use nalgebra::{Matrix4, Vector3, Vector4};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
+
+use crate::gameplay::camera::Camera;
+use crate::MageError;
+use crate::rendering::engine::{Engine, SHADER_LIBRARY};
+use crate::rendering::model::mesh::{Mesh, RenderingMesh};
+use crate::rendering::opengl::{
+    blend_func, clear, DrawingBuffer, enable, Factor, Feature, set_clear_color,
+};
+use crate::rendering::opengl::buffer::{Buffer, BufferType};
+use crate::rendering::opengl::program::Program;
+use crate::rendering::opengl::shader::ShaderType;
+use crate::rendering::Transform;
+use crate::resources::shader::ShaderLoader;
+use crate::resources::texture::TextureLoader;
 
 const VERTEX_SHADER: &str = "simple-rendering-vertex.glsl";
 const FRAGMENT_SHADER: &str = "simple-rendering-fragment.glsl";
