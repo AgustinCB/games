@@ -14,6 +14,7 @@ use crate::GameTextures;
 
 #[derive(Debug)]
 pub(crate) enum LevelElement {
+    Ball,
     Player,
     TopWall,
     RightWall,
@@ -136,7 +137,7 @@ impl Level {
                     transform.position = Vector3::new(
                         self.unit_width * x as f32 + self.unit_width / 2.0,
                         height - self.unit_height * y as f32 - self.unit_height / 2.0,
-                        1.0,
+                        0.1,
                     );
                     world.spawn((*brick, transform, mesh.clone()));
                 }

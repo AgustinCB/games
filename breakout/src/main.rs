@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::AtomicU32;
 
+use log::error;
 use nalgebra::{Point2, Vector3, Vector4};
 
 use mage::core::game::{Game, GameBuilder};
@@ -23,6 +24,7 @@ mod game_logic;
 pub(crate) mod level;
 mod player_controls;
 
+const BALL_RADIUS: f32 = 25.0;
 const HEIGHT: f32 = 600.0;
 const INITIAL_PLAYER_VELOCITY: u32 = 25000;
 const WIDTH: f32 = 800.0;
@@ -178,6 +180,7 @@ fn main() {
         );
     add_map(&textures, &mut game);
     add_player(&textures, &mut game);
+    add_ball(&textures, &mut game);
     game.play(vec![
         Box::new(
             game_logic::GameLogic::new(texture_loader, textures, WIDTH as _, HEIGHT as _).unwrap(),
@@ -237,11 +240,39 @@ fn add_frontier(
     game.add_collider(frontier, collider);
 }
 
+fn add_ball(
+    textures: &GameTextures,
+    game: &mut Game<SimpleEngine<Fixed2dCamera>>,
+) {
+    let position = Vector3::new(WIDTH / 2.0, HEIGHT / 4.0 + 100.0, 0.3);
+    let transform = TransformBuilder::new()
+        .with_position(position)
+        .build();
+    let handle = game.spawn((
+        LevelElement::Ball,
+        rectangle(
+            BALL_RADIUS,
+            BALL_RADIUS,
+            vec![textures.ball.clone()],
+        ),
+        transform,
+        Velocity(Vector3::zeros()),
+    ));
+    let rigidbody = RigidBodyBuilder::kinematic_velocity_based()
+        .translation(position)
+        .build();
+    let collider = ColliderBuilder::ball(BALL_RADIUS)
+        .active_events(ActiveEvents::COLLISION_EVENTS)
+        .active_collision_types(ActiveCollisionTypes::KINEMATIC_KINEMATIC | ActiveCollisionTypes::KINEMATIC_STATIC)
+        .build();
+    game.add_collider_and_rigidbody(handle, collider, rigidbody);
+}
+
 fn add_player(
     textures: &GameTextures,
     game: &mut Game<SimpleEngine<Fixed2dCamera>>,
 ) {
-    let player_position = Vector3::new(WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 0.1);
+    let player_position = Vector3::new(WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 0.3);
     let player_transform = TransformBuilder::new()
         .with_position(player_position)
         .build();

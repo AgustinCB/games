@@ -1,7 +1,8 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use hecs::World;
+use hecs::{Entity, World};
+use itertools::Itertools;
 use log::debug;
 use nalgebra::{Matrix4, Vector3, Vector4};
 
@@ -24,6 +25,7 @@ const FRAGMENT_SHADER: &str = "simple-rendering-fragment.glsl";
 const DEBUG_ITERATION: usize = 100;
 
 pub struct SimpleEngine<C: Camera> {
+    blending: bool,
     camera: C,
     clear_color: Vector3<f32>,
     iteration: AtomicUsize,
@@ -50,6 +52,7 @@ impl<C: Camera> SimpleEngine<C> {
         uniform_buffer.unbind();
         uniform_buffer.link_to_binding_point(0, 0, buffer_size);
         Ok(SimpleEngine {
+            blending: true,
             iteration: AtomicUsize::new(0),
             camera,
             clear_color,
@@ -76,8 +79,10 @@ impl<C: Camera> SimpleEngine<C> {
 impl<C: Camera> Engine for SimpleEngine<C> {
     fn setup(&self, world: &mut World) -> Result<(), MageError> {
         enable(Feature::Depth);
-        enable(Feature::Blend);
-        blend_func(Factor::SrcAlpha, Factor::OneMinusSrcAlpha);
+        if self.blending {
+            enable(Feature::Blend);
+            blend_func(Factor::SrcAlpha, Factor::OneMinusSrcAlpha);
+        }
         let mut rendering_mesh = vec![];
         for (e, mesh) in world.query_mut::<&Mesh>() {
             rendering_mesh.push((e, mesh.to_rendering_mesh(self.texture_loader.clone())?));
@@ -98,21 +103,36 @@ impl<C: Camera> Engine for SimpleEngine<C> {
         clear(&[DrawingBuffer::Color, DrawingBuffer::Depth]);
         self.program.use_program();
         self.setup_globals();
-        for (_e, (mesh, transform)) in world.query::<(&RenderingMesh, &Transform)>().iter() {
-            if self.iteration.load(Ordering::Relaxed) % DEBUG_ITERATION == 0 {
-                debug!(
+        let mut iter = world.query::<(&RenderingMesh, &Transform)>();
+        if !self.blending {
+            for (_e, (mesh, transform)) in iter.iter() {
+                self.render_mesh(world, _e, mesh, transform)?;
+            }
+        } else {
+            for (_e, (mesh, transform)) in iter.iter()
+                .sorted_by(|(_e, (_m, t)), (_e1, (_m1, t1))| t.position.z.total_cmp(&t1.position.z)) {
+                self.render_mesh(world, _e, mesh, transform)?;
+            }
+        };
+        self.iteration.fetch_add(1, Ordering::Relaxed);
+        Ok(())
+    }
+}
+
+impl<C: Camera> SimpleEngine<C> {
+    fn render_mesh(&self, world: &World, _e: Entity, mesh: &RenderingMesh, transform: &Transform) -> Result<(), MageError> {
+        if self.iteration.load(Ordering::Relaxed) % DEBUG_ITERATION == 0 {
+            debug!(
                     "MODEL {:?} {:?} {:?}",
                     _e,
                     transform,
                     world.query_one::<&Transform>(_e)?.get()
                 );
-            }
-            mesh.attach_to_program(&self.program);
-            self.program
-                .set_uniform_matrix4("model", transform.get_model_matrix());
-            mesh.draw();
         }
-        self.iteration.fetch_add(1, Ordering::Relaxed);
+        mesh.attach_to_program(&self.program);
+        self.program
+            .set_uniform_matrix4("model", transform.get_model_matrix());
+        mesh.draw();
         Ok(())
     }
 }
