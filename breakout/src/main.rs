@@ -1,26 +1,30 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::AtomicU32;
 
 use nalgebra::{Point2, Vector3, Vector4};
 
-use mage::core::game::GameBuilder;
-use mage::gameplay::camera::Fixed2dCameraBuilder;
+use mage::core::game::{Game, GameBuilder};
+use mage::gameplay::camera::{Fixed2dCamera, Fixed2dCameraBuilder};
 use mage::gameplay::input::{Input, InputType};
 use mage::MageError;
+use mage::physics::{ActiveCollisionTypes, ActiveEvents, ColliderBuilder, RigidBodyBuilder, Velocity};
 use mage::rendering::engine::SimpleEngine;
 use mage::rendering::model::cube::rectangle;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource, TextureType};
 use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
-use mage::rendering::Transform;
+use mage::rendering::TransformBuilder;
 use mage::resources::texture::TextureLoader;
+
+use crate::level::LevelElement;
 
 mod game_logic;
 pub(crate) mod level;
 mod player_controls;
 
 const HEIGHT: f32 = 600.0;
-const INITIAL_PLAYER_VELOCITY: u32 = 500;
+const INITIAL_PLAYER_VELOCITY: u32 = 25000;
 const WIDTH: f32 = 800.0;
 const PLAYER_HEIGHT: f32 = 20.0;
 const PLAYER_WIDTH: f32 = 100.0;
@@ -172,15 +176,77 @@ fn main() {
         .build(
             SimpleEngine::new(camera, Vector3::new(0.0, 0.0, 0.0), texture_loader.clone()).unwrap(),
         );
-    let mut transform = Transform::identity();
-    transform.position = Vector3::new(WIDTH / 2.0, HEIGHT / 2.0, 0.0);
+    add_map(&textures, &mut game);
+    add_player(&textures, &mut game);
+    game.play(vec![
+        Box::new(
+            game_logic::GameLogic::new(texture_loader, textures, WIDTH as _, HEIGHT as _).unwrap(),
+        ),
+        Box::new(player_controls::PlayerControls {
+            player_velocity: Arc::new(AtomicU32::new(INITIAL_PLAYER_VELOCITY)),
+            against_left_wall: RefCell::new(false),
+            against_right_wall: RefCell::new(false),
+        }),
+    ])
+        .unwrap();
+}
+
+fn add_map(
+    textures: &GameTextures,
+    game: &mut Game<SimpleEngine<Fixed2dCamera>>,
+) {
+    let background_position = Vector3::new(WIDTH / 2.0, HEIGHT / 2.0, 0.0);
+    let transform = TransformBuilder::new()
+        .with_position(background_position)
+        .build();
     game.spawn((
         rectangle(WIDTH / 2.0, HEIGHT / 2.0, vec![textures.background.clone()]),
         transform,
     ));
-    let mut player_transform = Transform::identity();
-    player_transform.position = Vector3::new(WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 1.0);
-    game.spawn((
+    add_frontier(game, Vector3::new(
+        WIDTH / 2.0, -0.5, 0.0,
+    ), WIDTH / 2.0, 0.5, true, LevelElement::BottomWall);
+    add_frontier(game, Vector3::new(
+        WIDTH / 2.0, HEIGHT + 0.5, 0.0,
+    ), WIDTH / 2.0, 0.5, false, LevelElement::TopWall);
+    add_frontier(game, Vector3::new(
+        -0.5, HEIGHT / 2.0, 0.0,
+    ), 0.5, HEIGHT / 2.0, false, LevelElement::LeftWall);
+    add_frontier(game, Vector3::new(
+        WIDTH + 0.5, HEIGHT / 2.0, 0.0,
+    ), 0.5, HEIGHT / 2.0, false, LevelElement::RightWall);
+}
+
+fn add_frontier(
+    game: &mut Game<SimpleEngine<Fixed2dCamera>>,
+    position: Vector3<f32>,
+    hx: f32,
+    hy: f32,
+    is_sensor: bool,
+    element: LevelElement,
+) {
+    let transform = TransformBuilder::new()
+        .with_position(position)
+        .build();
+    let frontier = game.spawn((transform, element));
+    let collider = ColliderBuilder::cuboid(hx, hy, 1.0)
+        .active_events(ActiveEvents::COLLISION_EVENTS)
+        .translation(position)
+        .sensor(is_sensor)
+        .build();
+    game.add_collider(frontier, collider);
+}
+
+fn add_player(
+    textures: &GameTextures,
+    game: &mut Game<SimpleEngine<Fixed2dCamera>>,
+) {
+    let player_position = Vector3::new(WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 0.1);
+    let player_transform = TransformBuilder::new()
+        .with_position(player_position)
+        .build();
+    let player_handle = game.spawn((
+        LevelElement::Player,
         rectangle(
             PLAYER_WIDTH / 2.0,
             PLAYER_HEIGHT / 2.0,
@@ -191,14 +257,14 @@ fn main() {
             input_types: vec![InputType::Keyboard],
             events: vec![],
         },
+        Velocity(Vector3::zeros()),
     ));
-    game.play(vec![
-        Box::new(
-            game_logic::GameLogic::new(texture_loader, textures, WIDTH as _, HEIGHT as _).unwrap(),
-        ),
-        Box::new(player_controls::PlayerControls {
-            player_velocity: Arc::new(AtomicU32::new(INITIAL_PLAYER_VELOCITY)),
-        }),
-    ])
-        .unwrap();
+    let rigidbody = RigidBodyBuilder::kinematic_velocity_based()
+        .translation(player_position)
+        .build();
+    let collider = ColliderBuilder::cuboid(PLAYER_WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 0.1)
+        .active_events(ActiveEvents::COLLISION_EVENTS)
+        .active_collision_types(ActiveCollisionTypes::KINEMATIC_KINEMATIC | ActiveCollisionTypes::KINEMATIC_STATIC)
+        .build();
+    game.add_collider_and_rigidbody(player_handle, collider, rigidbody);
 }

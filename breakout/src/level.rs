@@ -1,13 +1,25 @@
-use crate::GameTextures;
+use std::sync::Arc;
+
 use hecs::World;
+use nalgebra::Vector3;
+use thiserror::Error;
+
+use mage::MageError;
 use mage::rendering::model::cube::rectangle;
 use mage::rendering::model::mesh::{RenderingMesh, TextureInfo};
 use mage::rendering::Transform;
 use mage::resources::texture::TextureLoader;
-use mage::MageError;
-use nalgebra::Vector3;
-use std::sync::Arc;
-use thiserror::Error;
+
+use crate::GameTextures;
+
+#[derive(Debug)]
+pub(crate) enum LevelElement {
+    Player,
+    TopWall,
+    RightWall,
+    LeftWall,
+    BottomWall,
+}
 
 #[derive(Debug, Error)]
 enum LevelError {

@@ -1,6 +1,10 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
+use nalgebra::Point2;
 use nalgebra::Vector3;
+use rapier3d::dynamics::RigidBodyBuilder;
+use rapier3d::geometry::ColliderBuilder;
 use russimp::texture::TextureType;
 
 use mage::core::game::GameBuilder;
@@ -11,16 +15,15 @@ use mage::rendering::model::mesh::{TextureInfo, TextureSource};
 use mage::rendering::model::sphere::sphere;
 use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
 use mage::rendering::TransformBuilder;
-use nalgebra::Point2;
-use rapier3d::dynamics::RigidBodyBuilder;
-use rapier3d::geometry::ColliderBuilder;
+use mage::resources::texture::TextureLoader;
 
 pub fn main() {
     env_logger::init();
     let camera = Fixed2dCameraBuilder::new(Point2::new(-8.0, -6.0), Point2::new(8.0, 6.0)).build();
+    let texture_loader = Arc::new(TextureLoader::new());
     let mut game = GameBuilder::new("Basic Physics", 800, 600)
         .unwrap()
-        .build(SimpleEngine::new(camera, Vector3::new(0.3, 0.3, 0.5)).unwrap());
+        .build(SimpleEngine::new(camera, Vector3::new(0.3, 0.3, 0.5), texture_loader).unwrap());
     let cube = cuboid(
         5.0,
         0.5,

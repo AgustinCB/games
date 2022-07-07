@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 #![feature(negative_impls)]
 
 use std::error::Error;

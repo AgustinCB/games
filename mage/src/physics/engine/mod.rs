@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use hecs::Entity;
 use nalgebra::Vector3;
 use rapier3d::dynamics::{
@@ -5,43 +7,51 @@ use rapier3d::dynamics::{
     RigidBodyHandle, RigidBodySet,
 };
 use rapier3d::geometry::{BroadPhase, Collider, ColliderHandle, ColliderSet, NarrowPhase};
-use rapier3d::pipeline::{EventHandler, PhysicsHooks, PhysicsPipeline};
-use std::collections::HashMap;
+use rapier3d::pipeline::{ChannelEventCollector, PhysicsPipeline};
+use thiserror::Error;
 
-pub struct PhysicsEngine<E: EventHandler, P: PhysicsHooks> {
+use crate::MageError;
+
+#[derive(Debug, Error)]
+pub enum PhysicsEngineError {
+    #[error("Missing collision for entity")]
+    MissingCollision,
+}
+
+pub struct PhysicsEngine {
     broad_phase: BroadPhase,
     ccd_solver: CCDSolver,
     collider_scale: HashMap<ColliderHandle, Vector3<f32>>,
     collider_set: ColliderSet,
     colliders: HashMap<ColliderHandle, Entity>,
-    event_handler: E,
+    event_handler: ChannelEventCollector,
     gravity: Vector3<f32>,
     impulse_joins: ImpulseJointSet,
     integration_parameters: IntegrationParameters,
     island_manager: IslandManager,
     multibody_joints: MultibodyJointSet,
     narrow_phase: NarrowPhase,
-    physics_hooks: P,
+    physics_hooks: (),
     physics_pipeline: PhysicsPipeline,
     rigidbodies: HashMap<RigidBodyHandle, Entity>,
     rigidbody_set: RigidBodySet,
 }
 
-impl<E: EventHandler, P: PhysicsHooks> PhysicsEngine<E, P> {
-    pub fn new(gravity: Vector3<f32>, hooks: P, handler: E) -> PhysicsEngine<E, P> {
+impl PhysicsEngine {
+    pub fn new(gravity: Vector3<f32>, event_handler: ChannelEventCollector) -> PhysicsEngine {
         PhysicsEngine {
+            event_handler,
             broad_phase: BroadPhase::default(),
             ccd_solver: CCDSolver::default(),
             collider_scale: HashMap::new(),
             collider_set: ColliderSet::new(),
             colliders: HashMap::new(),
-            event_handler: handler,
             impulse_joins: ImpulseJointSet::new(),
             integration_parameters: IntegrationParameters::default(),
             island_manager: IslandManager::new(),
             multibody_joints: MultibodyJointSet::new(),
             narrow_phase: NarrowPhase::default(),
-            physics_hooks: hooks,
+            physics_hooks: (),
             physics_pipeline: PhysicsPipeline::default(),
             rigidbodies: HashMap::new(),
             rigidbody_set: RigidBodySet::new(),
@@ -74,10 +84,14 @@ impl<E: EventHandler, P: PhysicsHooks> PhysicsEngine<E, P> {
         })
     }
 
-    pub fn iter_mut_rigidbody(&mut self) -> impl Iterator<Item = (Entity, &mut RigidBody)> {
+    pub fn iter_mut_rigidbody(&mut self) -> impl Iterator<Item=(Entity, &mut RigidBody)> {
         self.rigidbody_set
             .iter_mut()
             .map(|(h, r)| (*self.rigidbodies.get(&h).unwrap(), r))
+    }
+
+    pub fn get_entity_from_collider(&self, collider: ColliderHandle) -> Result<Entity, MageError> {
+        self.colliders.get(&collider).map(|e| *e).ok_or_else(|| PhysicsEngineError::MissingCollision.into())
     }
 
     pub fn add_collider(&mut self, entity: Entity, collider: Collider) {

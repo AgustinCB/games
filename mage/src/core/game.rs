@@ -1,28 +1,30 @@
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+use hecs::{Component, DynamicBundle, Entity};
+use rapier3d::dynamics::RigidBody;
+use rapier3d::geometry::Collider;
+pub use rapier3d::pipeline::{EventHandler, PhysicsHooks};
+use sdl2::keyboard::Keycode;
+
 use crate::core::system::System;
 use crate::core::window::Window;
 use crate::core::world::World;
 use crate::gameplay::input::{Input, InputSystem, InputType};
 use crate::gameplay::quit::{QuitControl, QuitSystem};
-use crate::rendering::engine::Engine;
 use crate::MageError;
-use hecs::{Component, DynamicBundle, Entity};
-use rapier3d::dynamics::RigidBody;
-use rapier3d::geometry::Collider;
-use rapier3d::pipeline::{EventHandler, PhysicsHooks};
-use sdl2::keyboard::Keycode;
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use crate::rendering::engine::Engine;
 
-pub struct GameBuilder<E: EventHandler, P: PhysicsHooks> {
+pub struct GameBuilder {
     game_ended: Arc<AtomicBool>,
     window: Window,
-    world: World<E, P>,
+    world: World,
 }
 
-impl GameBuilder<(), ()> {
-    pub fn new(name: &str, width: u32, height: u32) -> Result<GameBuilder<(), ()>, MageError> {
+impl GameBuilder {
+    pub fn new(name: &str, width: u32, height: u32) -> Result<GameBuilder, MageError> {
         let world = World::new();
         let window = Window::new(name, width, height)?;
         Ok(GameBuilder {
@@ -33,8 +35,8 @@ impl GameBuilder<(), ()> {
     }
 }
 
-impl<E: EventHandler, P: PhysicsHooks> GameBuilder<E, P> {
-    pub fn build<N: Engine>(self, engine: N) -> Game<N, E, P> {
+impl GameBuilder {
+    pub fn build<N: Engine>(self, engine: N) -> Game<N> {
         Game {
             engine,
             frame_rate: 1000 / 60, // 60 frames per second
@@ -45,15 +47,15 @@ impl<E: EventHandler, P: PhysicsHooks> GameBuilder<E, P> {
     }
 }
 
-pub struct Game<N: Engine, E: EventHandler, P: PhysicsHooks> {
+pub struct Game<N: Engine> {
     engine: N,
     frame_rate: u64,
     game_ended: Arc<AtomicBool>,
     window: Window,
-    world: World<E, P>,
+    world: World,
 }
 
-impl<N: Engine, E: EventHandler, P: PhysicsHooks> Game<N, E, P> {
+impl<N: Engine> Game<N> {
     pub fn spawn(&mut self, components: impl DynamicBundle) -> Entity {
         self.world.get_mut().spawn(components)
     }
