@@ -72,7 +72,7 @@ impl System for BouncingControlsSystem {
             work_queue.push((e, x, y));
         }
         let mut velocities = vec![];
-        let multiplier = (delta_time as f32 / 1000.0).clamp(0.0, 0.03);
+        let multiplier = (delta_time as f32 / 1000.0).clamp(0.0, 0.04);
         for (e, x, y) in work_queue {
             if let Ok(props) = world.query_one_mut::<&mut BouncingProperties>(e) {
                 props.velocity.x *= x;
