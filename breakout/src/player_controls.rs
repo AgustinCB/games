@@ -14,13 +14,13 @@ use mage::physics::{Collisions, Velocity};
 
 use crate::LevelElement;
 
-pub(crate) struct PlayerControls {
+pub(crate) struct PlayerControlsSystem {
     pub(crate) player_velocity: Arc<AtomicU32>,
     pub(crate) against_left_wall: RefCell<bool>,
     pub(crate) against_right_wall: RefCell<bool>,
 }
 
-impl System for PlayerControls {
+impl System for PlayerControlsSystem {
     fn name(&self) -> &str {
         "Player Controls"
     }
@@ -44,7 +44,7 @@ impl System for PlayerControls {
     }
 }
 
-impl PlayerControls {
+impl PlayerControlsSystem {
     fn update_collisions(&self, world: &mut World) {
         for (e, collisions) in world.query::<&Collisions>().iter() {
             if !world.query_one::<&Input>(e).map_or(false, |mut q| q.get().is_some()) {

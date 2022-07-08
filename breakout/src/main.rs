@@ -1,10 +1,9 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::atomic::AtomicU32;
+use std::sync::atomic::{AtomicU32, AtomicU8};
 
-use log::error;
-use nalgebra::{Point2, Vector3, Vector4};
+use nalgebra::{Point2, Vector2, Vector3, Vector4};
 
 use mage::core::game::{Game, GameBuilder};
 use mage::gameplay::camera::{Fixed2dCamera, Fixed2dCameraBuilder};
@@ -18,14 +17,19 @@ use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
 use mage::rendering::TransformBuilder;
 use mage::resources::texture::TextureLoader;
 
+use crate::bouncing_controls::{BouncingControlsSystem, BouncingProperties};
+use crate::game_logic::GameState;
 use crate::level::LevelElement;
 
+mod bouncing_controls;
 mod game_logic;
 pub(crate) mod level;
 mod player_controls;
 
 const BALL_RADIUS: f32 = 25.0;
 const HEIGHT: f32 = 600.0;
+const INITIAL_BALL_VELOCITY_X: f32 = 50.0 * 100.0;
+const INITIAL_BALL_VELOCITY_Y: f32 = 50.0 * -350.0;
 const INITIAL_PLAYER_VELOCITY: u32 = 25000;
 const WIDTH: f32 = 800.0;
 const PLAYER_HEIGHT: f32 = 20.0;
@@ -181,15 +185,21 @@ fn main() {
     add_map(&textures, &mut game);
     add_player(&textures, &mut game);
     add_ball(&textures, &mut game);
+    let status = Arc::new(AtomicU8::new(GameState::Active as _));
     game.play(vec![
         Box::new(
-            game_logic::GameLogic::new(texture_loader, textures, WIDTH as _, HEIGHT as _).unwrap(),
+            game_logic::GameLogic::new(texture_loader, textures, WIDTH as _, HEIGHT as _, status.clone()).unwrap(),
         ),
-        Box::new(player_controls::PlayerControls {
+        Box::new(player_controls::PlayerControlsSystem {
             player_velocity: Arc::new(AtomicU32::new(INITIAL_PLAYER_VELOCITY)),
             against_left_wall: RefCell::new(false),
             against_right_wall: RefCell::new(false),
         }),
+        Box::new(
+            BouncingControlsSystem {
+                game_state: status,
+            }
+        ),
     ])
         .unwrap();
 }
@@ -244,7 +254,7 @@ fn add_ball(
     textures: &GameTextures,
     game: &mut Game<SimpleEngine<Fixed2dCamera>>,
 ) {
-    let position = Vector3::new(WIDTH / 2.0, HEIGHT / 4.0 + 100.0, 0.3);
+    let position = Vector3::new(WIDTH / 2.0, HEIGHT / 4.0 + 300.0, 0.3);
     let transform = TransformBuilder::new()
         .with_position(position)
         .build();
@@ -256,7 +266,9 @@ fn add_ball(
             vec![textures.ball.clone()],
         ),
         transform,
-        Velocity(Vector3::zeros()),
+        BouncingProperties {
+            velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y)
+        },
     ));
     let rigidbody = RigidBodyBuilder::kinematic_velocity_based()
         .translation(position)

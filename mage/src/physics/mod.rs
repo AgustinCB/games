@@ -7,13 +7,13 @@ pub use rapier3d::pipeline::ActiveEvents;
 pub mod engine;
 pub mod scalable_shape;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Collision {
     pub entity_id: Entity,
     pub started: bool,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Collisions(pub Vec<Collision>);
 
 pub struct Triggers(pub Vec<Collision>);

@@ -1,22 +1,25 @@
-use crate::level::Level;
-use crate::GameTextures;
-use hecs::World;
-use mage::core::system::System;
-use mage::resources::texture::TextureLoader;
-use mage::MageError;
-use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
+use std::sync::atomic::AtomicU8;
 
-#[repr(u32)]
-enum GameState {
-    Active = 0u32,
+use hecs::World;
+
+use mage::core::system::System;
+use mage::MageError;
+use mage::resources::texture::TextureLoader;
+
+use crate::GameTextures;
+use crate::level::Level;
+
+#[repr(u8)]
+pub(crate) enum GameState {
+    Active = 0u8,
     Menu,
     Win,
     Loose,
 }
 
-impl From<u32> for GameState {
-    fn from(val: u32) -> GameState {
+impl From<u8> for GameState {
+    fn from(val: u8) -> GameState {
         match val {
             0 => GameState::Active,
             1 => GameState::Menu,
@@ -32,7 +35,7 @@ pub(crate) struct GameLogic {
     _height: u32,
     level: usize,
     levels: Vec<Level>,
-    _state: Arc<AtomicU32>,
+    _state: Arc<AtomicU8>,
     texture_loader: Arc<TextureLoader>,
     _width: u32,
 }
@@ -42,6 +45,7 @@ impl GameLogic {
         game_textures: GameTextures,
         width: u32,
         height: u32,
+        state: Arc<AtomicU8>,
     ) -> Result<GameLogic, MageError> {
         Ok(GameLogic {
             level: 0,
@@ -82,7 +86,7 @@ impl GameLogic {
                     width,
                 )?,
             ],
-            _state: Arc::new(AtomicU32::new(GameState::Active as _)),
+            _state: state,
             game_textures,
             texture_loader,
             _height: height,
