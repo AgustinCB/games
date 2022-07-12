@@ -8,9 +8,8 @@ use rapier3d::dynamics::{
 };
 use rapier3d::geometry::{BroadPhase, Collider, ColliderHandle, ColliderSet, NarrowPhase};
 use rapier3d::pipeline::{ChannelEventCollector, PhysicsPipeline};
+use rapier3d::prelude::ContactPair;
 use thiserror::Error;
-
-use crate::MageError;
 
 #[derive(Debug, Error)]
 pub enum PhysicsEngineError {
@@ -59,16 +58,16 @@ impl PhysicsEngine {
         }
     }
 
-    pub fn iter_colliders(&self) -> impl Iterator<Item = (Entity, &Collider)> {
+    pub fn iter_colliders(&self) -> impl Iterator<Item=(Entity, ColliderHandle, &Collider)> {
         self.collider_set
             .iter()
-            .map(|(h, c)| (*self.colliders.get(&h).unwrap(), c))
+            .map(|(h, c)| (*self.colliders.get(&h).unwrap(), h, c))
     }
 
-    pub fn iter_rigidbody(&self) -> impl Iterator<Item = (Entity, &RigidBody)> {
+    pub fn iter_rigidbody(&self) -> impl Iterator<Item=(Entity, RigidBodyHandle, &RigidBody)> {
         self.rigidbody_set
             .iter()
-            .map(|(h, r)| (*self.rigidbodies.get(&h).unwrap(), r))
+            .map(|(h, r)| (*self.rigidbodies.get(&h).unwrap(), h, r))
     }
 
     pub fn iter_mut_colliders(
@@ -90,8 +89,35 @@ impl PhysicsEngine {
             .map(|(h, r)| (*self.rigidbodies.get(&h).unwrap(), r))
     }
 
-    pub fn get_entity_from_collider(&self, collider: ColliderHandle) -> Result<Entity, MageError> {
-        self.colliders.get(&collider).map(|e| *e).ok_or_else(|| PhysicsEngineError::MissingCollision.into())
+    pub fn get_entity_from_collider(&self, collider: ColliderHandle) -> Option<Entity> {
+        self.colliders.get(&collider).map(|e| *e)
+    }
+
+    pub fn get_user_data_from_collider(&self, handle: ColliderHandle) -> Option<u128> {
+        self.collider_set.get(handle).map(|c| c.user_data)
+    }
+
+    pub fn remove_rigidbody(&mut self, handle: RigidBodyHandle) {
+        self.rigidbody_set.remove(
+            handle,
+            &mut self.island_manager,
+            &mut self.collider_set,
+            &mut self.impulse_joins,
+            &mut self.multibody_joints,
+            true,
+        );
+        self.rigidbodies.remove(&handle);
+    }
+
+    pub fn remove_collider(&mut self, handle: ColliderHandle) {
+        self.collider_set.remove(
+            handle,
+            &mut self.island_manager,
+            &mut self.rigidbody_set,
+            true,
+        );
+        self.colliders.remove(&handle);
+        self.collider_scale.remove(&handle);
     }
 
     pub fn add_collider(&mut self, entity: Entity, collider: Collider) {
@@ -121,6 +147,10 @@ impl PhysicsEngine {
         self.colliders.insert(collider_handle, entity);
         self.collider_scale
             .insert(collider_handle, Vector3::new(1.0, 1.0, 1.0));
+    }
+
+    pub fn contact_pair(&self, collider_handle1: ColliderHandle, collider_handle2: ColliderHandle) -> Option<&ContactPair> {
+        self.narrow_phase.contact_pair(collider_handle1, collider_handle2)
     }
 
     pub fn set_scales(&mut self, scales: Vec<(ColliderHandle, Vector3<f32>)>) {

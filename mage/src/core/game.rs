@@ -18,6 +18,7 @@ use crate::MageError;
 use crate::rendering::engine::Engine;
 
 pub struct GameBuilder {
+    frame_rate: Option<u64>,
     game_ended: Arc<AtomicBool>,
     window: Window,
     world: World,
@@ -28,6 +29,7 @@ impl GameBuilder {
         let world = World::new();
         let window = Window::new(name, width, height)?;
         Ok(GameBuilder {
+            frame_rate: None,
             game_ended: Arc::new(AtomicBool::new(false)),
             window,
             world,
@@ -36,10 +38,19 @@ impl GameBuilder {
 }
 
 impl GameBuilder {
+    pub fn with_frame_rate(self, frame_rate: u64) -> Self {
+        GameBuilder {
+            frame_rate: Some(frame_rate),
+            game_ended: self.game_ended,
+            window: self.window,
+            world: self.world,
+        }
+    }
+
     pub fn build<N: Engine>(self, engine: N) -> Game<N> {
         Game {
             engine,
-            frame_rate: 1000 / 60, // 60 frames per second
+            frame_rate: self.frame_rate.unwrap_or(1000 / 60), // 60 frames per second
             game_ended: self.game_ended,
             window: self.window,
             world: self.world,
@@ -105,22 +116,20 @@ impl<N: Engine> Game<N> {
             self.world.add_system(system);
         }
 
-        self.window.start_timer();
         self.engine.setup(&mut self.world.world)?;
         self.world.start();
         let mut lag = 0;
+        self.update_world(0);
+        self.window.start_timer();
         while !self.game_ended.load(Ordering::Relaxed) {
             let delta_time = self.window.delta_time();
             lag += delta_time;
 
-            self.world.early_update(delta_time);
-
             while lag >= self.frame_rate {
-                self.world.update(delta_time);
+                self.update_world(delta_time);
                 lag -= self.frame_rate;
             }
 
-            self.world.late_update(delta_time);
             self.engine.render(
                 &mut self.world.world,
                 delta_time as f32 / self.frame_rate as f32,
@@ -129,5 +138,11 @@ impl<N: Engine> Game<N> {
             self.window.swap_buffers();
         }
         Ok(())
+    }
+
+    fn update_world(&mut self, delta_time: u64) {
+        self.world.early_update(delta_time);
+        self.world.update(delta_time);
+        self.world.late_update(delta_time);
     }
 }

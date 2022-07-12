@@ -6,7 +6,7 @@ use nalgebra::{Vector2, Vector3};
 
 use mage::core::system::System;
 use mage::MageError;
-use mage::physics::{Collisions, Velocity};
+use mage::physics::{Collision, Collisions, Velocity};
 
 use crate::game_logic::GameState;
 use crate::LevelElement;
@@ -34,59 +34,56 @@ impl System for BouncingControlsSystem {
     }
 
     fn update(&self, world: &mut World, delta_time: u64) -> Result<(), MageError> {
-        let mut work_queue = vec![];
-        for (e, _props) in world.query::<&BouncingProperties>().iter() {
-            let (mut x, mut y) = (1.0, 1.0);
-            if let Some(collisions) = world.query_one::<&Collisions>(e)
-                .map(|mut q| q.get().cloned())
-                .ok()
-                .flatten() {
-                for collision in collisions.0 {
-                    if !collision.started {
-                        continue;
-                    }
-                    if let Ok(mut result) = world.query_one::<&LevelElement>(collision.entity_id) {
-                        let result = result.get();
-                        match result {
-                            Some(LevelElement::RightWall) => {
-                                x *= -1.0;
-                            },
-                            Some(LevelElement::LeftWall) => {
-                                x *= -1.0;
-                            },
-                            Some(LevelElement::TopWall) => {
-                                y *= -1.0;
-                            },
-                            Some(LevelElement::Player) => {
-                                y *= -1.0;
+        let mut broken_blocks = vec![];
+        let multiplier = delta_time as f32 / 1000.0;
+        for (_, (collisions, props, velocity)) in world.query_mut::<(&Collisions, &mut BouncingProperties, &mut Velocity)>() {
+            let (mut x, mut y) = (false, false);
+            for collision in &collisions.0 {
+                if let Collision::Started(entity_id, contact_pair, user_data) = collision {
+                    let element = LevelElement::from(*user_data as u8);
+                    match element {
+                        LevelElement::RightWall => {
+                            x = true;
+                        },
+                        LevelElement::LeftWall => {
+                            x = true;
+                        },
+                        LevelElement::TopWall => {
+                            y = true;
+                        },
+                        LevelElement::Player => {
+                            y = true;
+                        },
+                        LevelElement::Block | LevelElement::SolidBlock => {
+                            if let Some((contact, _)) = contact_pair.find_deepest_contact() {
+                                if contact.local_n1.x.abs() > contact.local_n1.y.abs() {
+                                    x = true;
+                                } else {
+                                    y = true;
+                                }
+                                if LevelElement::Block == element {
+                                    broken_blocks.push(*entity_id);
+                                }
                             }
-                            Some(LevelElement::BottomWall) => {
-                                self.game_state.store(GameState::Loose as u8, Ordering::Relaxed);
-                                return Ok(());
-                            }
-                            _ => {}
-                        }
+                        },
+                        LevelElement::BottomWall => {
+                            self.game_state.store(GameState::Loose as u8, Ordering::Relaxed);
+                            return Ok(());
+                        },
+                        _ => {}
                     }
                 }
             }
-            work_queue.push((e, x, y));
+            props.velocity.x *= x.then_some(-1.0).unwrap_or(1.0);
+            props.velocity.y *= y.then_some(-1.0).unwrap_or(1.0);
+            velocity.0 = Vector3::new(
+                props.velocity.x * multiplier,
+                props.velocity.y * multiplier,
+                0.0,
+            );
         }
-        let mut velocities = vec![];
-        let multiplier = (delta_time as f32 / 1000.0).clamp(0.0, 0.04);
-        for (e, x, y) in work_queue {
-            if let Ok(props) = world.query_one_mut::<&mut BouncingProperties>(e) {
-                props.velocity.x *= x;
-                props.velocity.y *= y;
-                let velocity = Vector3::new(
-                    props.velocity.x * multiplier,
-                    props.velocity.y * multiplier,
-                    0.0,
-                );
-                velocities.push((e, velocity));
-            }
-        }
-        for (e, velocity) in velocities {
-            world.insert_one(e, Velocity(velocity))?;
+        for broken_block in broken_blocks {
+            world.despawn(broken_block)?;
         }
         Ok(())
     }

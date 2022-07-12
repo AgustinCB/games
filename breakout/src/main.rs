@@ -1,7 +1,10 @@
+#![feature(bool_to_option)]
+extern crate core;
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, AtomicU8};
+use std::sync::atomic::AtomicU8;
 
 use nalgebra::{Point2, Vector2, Vector3, Vector4};
 
@@ -9,7 +12,7 @@ use mage::core::game::{Game, GameBuilder};
 use mage::gameplay::camera::{Fixed2dCamera, Fixed2dCameraBuilder};
 use mage::gameplay::input::{Input, InputType};
 use mage::MageError;
-use mage::physics::{ActiveCollisionTypes, ActiveEvents, ColliderBuilder, RigidBodyBuilder, Velocity};
+use mage::physics::{ActiveCollisionTypes, ActiveEvents, ColliderBuilder, Collisions, RigidBodyBuilder, Velocity};
 use mage::rendering::engine::SimpleEngine;
 use mage::rendering::model::cube::rectangle;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource, TextureType};
@@ -20,6 +23,7 @@ use mage::resources::texture::TextureLoader;
 use crate::bouncing_controls::{BouncingControlsSystem, BouncingProperties};
 use crate::game_logic::GameState;
 use crate::level::LevelElement;
+use crate::player_controls::PlayerVelocity;
 
 mod bouncing_controls;
 mod game_logic;
@@ -28,9 +32,9 @@ mod player_controls;
 
 const BALL_RADIUS: f32 = 25.0;
 const HEIGHT: f32 = 600.0;
-const INITIAL_BALL_VELOCITY_X: f32 = 50.0 * 100.0;
-const INITIAL_BALL_VELOCITY_Y: f32 = 50.0 * -350.0;
-const INITIAL_PLAYER_VELOCITY: u32 = 25000;
+const INITIAL_BALL_VELOCITY_X: f32 = 25.0 * 100.0;
+const INITIAL_BALL_VELOCITY_Y: f32 = 25.0 * -350.0;
+const INITIAL_PLAYER_VELOCITY: u32 = 12500;
 const WIDTH: f32 = 800.0;
 const PLAYER_HEIGHT: f32 = 20.0;
 const PLAYER_WIDTH: f32 = 100.0;
@@ -179,6 +183,7 @@ fn main() {
         Fixed2dCameraBuilder::new(Point2::new(0.0, 0.0), Point2::new(WIDTH, HEIGHT)).build();
     let mut game = GameBuilder::new("Breakout", WIDTH as _, HEIGHT as _)
         .unwrap()
+        .with_frame_rate(1000 / 120)
         .build(
             SimpleEngine::new(camera, Vector3::new(0.0, 0.0, 0.0), texture_loader.clone()).unwrap(),
         );
@@ -191,7 +196,8 @@ fn main() {
             game_logic::GameLogic::new(texture_loader, textures, WIDTH as _, HEIGHT as _, status.clone()).unwrap(),
         ),
         Box::new(player_controls::PlayerControlsSystem {
-            player_velocity: Arc::new(AtomicU32::new(INITIAL_PLAYER_VELOCITY)),
+            hx: PLAYER_WIDTH / 2.0,
+            width: WIDTH,
             against_left_wall: RefCell::new(false),
             against_right_wall: RefCell::new(false),
         }),
@@ -241,8 +247,9 @@ fn add_frontier(
     let transform = TransformBuilder::new()
         .with_position(position)
         .build();
-    let frontier = game.spawn((transform, element));
+    let frontier = game.spawn((transform, ));
     let collider = ColliderBuilder::cuboid(hx, hy, 1.0)
+        .user_data(element as _)
         .active_events(ActiveEvents::COLLISION_EVENTS)
         .translation(position)
         .sensor(is_sensor)
@@ -254,26 +261,28 @@ fn add_ball(
     textures: &GameTextures,
     game: &mut Game<SimpleEngine<Fixed2dCamera>>,
 ) {
-    let position = Vector3::new(WIDTH / 2.0, HEIGHT / 4.0 + 300.0, 0.3);
+    let position = Vector3::new(WIDTH / 2.0, HEIGHT / 2.0 - BALL_RADIUS * 2.0, 0.3);
     let transform = TransformBuilder::new()
         .with_position(position)
         .build();
     let handle = game.spawn((
-        LevelElement::Ball,
         rectangle(
             BALL_RADIUS,
             BALL_RADIUS,
             vec![textures.ball.clone()],
         ),
         transform,
+        Collisions(vec![]),
+        Velocity(Vector3::zeros()),
         BouncingProperties {
-            velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y)
+            velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y),
         },
     ));
     let rigidbody = RigidBodyBuilder::kinematic_velocity_based()
         .translation(position)
         .build();
     let collider = ColliderBuilder::ball(BALL_RADIUS)
+        .user_data(LevelElement::Ball as _)
         .active_events(ActiveEvents::COLLISION_EVENTS)
         .active_collision_types(ActiveCollisionTypes::KINEMATIC_KINEMATIC | ActiveCollisionTypes::KINEMATIC_STATIC)
         .build();
@@ -289,7 +298,6 @@ fn add_player(
         .with_position(player_position)
         .build();
     let player_handle = game.spawn((
-        LevelElement::Player,
         rectangle(
             PLAYER_WIDTH / 2.0,
             PLAYER_HEIGHT / 2.0,
@@ -300,12 +308,16 @@ fn add_player(
             input_types: vec![InputType::Keyboard],
             events: vec![],
         },
+        Collisions(vec![]),
+        PlayerVelocity(INITIAL_PLAYER_VELOCITY as f32),
         Velocity(Vector3::zeros()),
     ));
     let rigidbody = RigidBodyBuilder::kinematic_velocity_based()
         .translation(player_position)
+        .gravity_scale(1.0)
         .build();
     let collider = ColliderBuilder::cuboid(PLAYER_WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 0.1)
+        .user_data(LevelElement::Player as u128)
         .active_events(ActiveEvents::COLLISION_EVENTS)
         .active_collision_types(ActiveCollisionTypes::KINEMATIC_KINEMATIC | ActiveCollisionTypes::KINEMATIC_STATIC)
         .build();

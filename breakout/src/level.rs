@@ -5,6 +5,7 @@ use nalgebra::Vector3;
 use thiserror::Error;
 
 use mage::MageError;
+use mage::physics::ColliderBuilder;
 use mage::rendering::model::cube::rectangle;
 use mage::rendering::model::mesh::{RenderingMesh, TextureInfo};
 use mage::rendering::Transform;
@@ -12,14 +13,33 @@ use mage::resources::texture::TextureLoader;
 
 use crate::GameTextures;
 
-#[derive(Debug)]
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) enum LevelElement {
-    Ball,
+    Ball = 0,
+    Block,
+    SolidBlock,
     Player,
     TopWall,
     RightWall,
     LeftWall,
     BottomWall,
+}
+
+impl From<u8> for LevelElement {
+    fn from(value: u8) -> LevelElement {
+        match value {
+            0 => LevelElement::Ball,
+            1 => LevelElement::Block,
+            2 => LevelElement::SolidBlock,
+            3 => LevelElement::Player,
+            4 => LevelElement::TopWall,
+            5 => LevelElement::RightWall,
+            6 => LevelElement::LeftWall,
+            7 => LevelElement::BottomWall,
+            _ => panic!("Invalid element conversion"),
+        }
+    }
 }
 
 #[derive(Debug, Error)]
@@ -41,6 +61,15 @@ enum Brick {
     SolidBlock,
     WhiteBlock,
     YellowBlock,
+}
+
+impl Into<LevelElement> for Brick {
+    fn into(self) -> LevelElement {
+        match self {
+            Brick::SolidBlock => LevelElement::SolidBlock,
+            _ => LevelElement::Block,
+        }
+    }
 }
 
 impl TryFrom<u8> for Brick {
@@ -139,9 +168,22 @@ impl Level {
                         height - self.unit_height * y as f32 - self.unit_height / 2.0,
                         0.1,
                     );
-                    world.spawn((*brick, transform, mesh.clone()));
+                    self.spawn_brick(world, *brick, mesh, transform);
                 }
             }
         }
+    }
+
+    fn spawn_brick(&self, world: &mut World, brick: Brick, mesh: &RenderingMesh, transform: Transform) {
+        let element = Into::<LevelElement>::into(brick);
+        let collider = ColliderBuilder::cuboid(
+            self.unit_width / 2.0,
+            self.unit_height / 2.0,
+            0.1,
+        )
+            .translation(transform.position)
+            .user_data(element as _)
+            .build();
+        world.spawn((brick, transform, mesh.clone(), collider));
     }
 }
