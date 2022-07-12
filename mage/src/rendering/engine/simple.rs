@@ -109,8 +109,10 @@ impl<C: Camera> Engine for SimpleEngine<C> {
                 self.render_mesh(world, _e, mesh, transform)?;
             }
         } else {
-            for (_e, (mesh, transform)) in iter.iter()
-                .sorted_by(|(_e, (_m, t)), (_e1, (_m1, t1))| t.position.z.total_cmp(&t1.position.z)) {
+            for (_e, (mesh, transform)) in iter
+                .iter()
+                .sorted_by(|(_e, (_m, t)), (_e1, (_m1, t1))| t.position.z.total_cmp(&t1.position.z))
+            {
                 self.render_mesh(world, _e, mesh, transform)?;
             }
         };
@@ -120,14 +122,20 @@ impl<C: Camera> Engine for SimpleEngine<C> {
 }
 
 impl<C: Camera> SimpleEngine<C> {
-    fn render_mesh(&self, world: &World, _e: Entity, mesh: &RenderingMesh, transform: &Transform) -> Result<(), MageError> {
+    fn render_mesh(
+        &self,
+        world: &World,
+        _e: Entity,
+        mesh: &RenderingMesh,
+        transform: &Transform,
+    ) -> Result<(), MageError> {
         if self.iteration.load(Ordering::Relaxed) % DEBUG_ITERATION == 0 {
             debug!(
-                    "MODEL {:?} {:?} {:?}",
-                    _e,
-                    transform,
-                    world.query_one::<&Transform>(_e)?.get()
-                );
+                "MODEL {:?} {:?} {:?}",
+                _e,
+                transform,
+                world.query_one::<&Transform>(_e)?.get()
+            );
         }
         mesh.attach_to_program(&self.program);
         self.program

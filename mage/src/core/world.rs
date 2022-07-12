@@ -39,10 +39,7 @@ impl World {
         let (events_sender, events_receiver) = unbounded();
         World {
             events_receiver,
-            physics_engine: PhysicsEngine::new(
-                GRAVITY,
-                ChannelEventCollector::new(events_sender),
-            ),
+            physics_engine: PhysicsEngine::new(GRAVITY, ChannelEventCollector::new(events_sender)),
             systems: vec![],
             world: HecsWorld::new(),
         }
@@ -172,8 +169,7 @@ impl World {
                     }
                 }
             }
-            if let Some(mut velocity) =
-            handle_result(self.world.query_one::<&Velocity>(entity)) {
+            if let Some(mut velocity) = handle_result(self.world.query_one::<&Velocity>(entity)) {
                 if let Some(velocity) = velocity.get() {
                     r.set_linvel(velocity.0, true);
                 }
@@ -267,10 +263,11 @@ impl World {
             }
         }
         for (entity, collisions) in collisions_per_entity.into_iter() {
-            let _ = self.world.query_one_mut::<(&mut Collisions, )>(entity)
+            let _ = self
+                .world
+                .query_one_mut::<(&mut Collisions, )>(entity)
                 .map(|(mut r, )| {
                     r.0 = collisions;
-                    ()
                 });
         }
     }

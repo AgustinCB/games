@@ -90,7 +90,7 @@ impl PhysicsEngine {
     }
 
     pub fn get_entity_from_collider(&self, collider: ColliderHandle) -> Option<Entity> {
-        self.colliders.get(&collider).map(|e| *e)
+        self.colliders.get(&collider).copied()
     }
 
     pub fn get_user_data_from_collider(&self, handle: ColliderHandle) -> Option<u128> {
@@ -149,8 +149,13 @@ impl PhysicsEngine {
             .insert(collider_handle, Vector3::new(1.0, 1.0, 1.0));
     }
 
-    pub fn contact_pair(&self, collider_handle1: ColliderHandle, collider_handle2: ColliderHandle) -> Option<&ContactPair> {
-        self.narrow_phase.contact_pair(collider_handle1, collider_handle2)
+    pub fn contact_pair(
+        &self,
+        collider_handle1: ColliderHandle,
+        collider_handle2: ColliderHandle,
+    ) -> Option<&ContactPair> {
+        self.narrow_phase
+            .contact_pair(collider_handle1, collider_handle2)
     }
 
     pub fn set_scales(&mut self, scales: Vec<(ColliderHandle, Vector3<f32>)>) {

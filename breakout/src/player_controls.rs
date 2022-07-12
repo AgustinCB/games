@@ -36,16 +36,22 @@ impl System for PlayerControlsSystem {
     }
 
     fn update(&self, world: &mut World, delta_time: u64) -> Result<(), MageError> {
-        for (_e, (collisions, input, player_velocity, velocity, transform)) in world.query_mut::<(&Collisions, &Input, &PlayerVelocity, &mut Velocity, &mut Transform)>() {
+        for (_e, (collisions, input, player_velocity, velocity, transform)) in world.query_mut::<(
+            &Collisions,
+            &Input,
+            &PlayerVelocity,
+            &mut Velocity,
+            &mut Transform,
+        )>() {
             for collision in &collisions.0 {
                 let element = LevelElement::from(collision.user_data() as u8);
                 match element {
                     LevelElement::RightWall => {
                         self.against_right_wall.replace(collision.started());
-                    },
+                    }
                     LevelElement::LeftWall => {
                         self.against_left_wall.replace(collision.started());
-                    },
+                    }
                     _ => {}
                 };
             }

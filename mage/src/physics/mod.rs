@@ -17,10 +17,7 @@ pub enum Collision {
 
 impl Collision {
     pub fn started(&self) -> bool {
-        match self {
-            Collision::Started(_, _, _) => true,
-            _ => false,
-        }
+        matches!(self, Collision::Started(_, _, _))
     }
 
     pub fn entity_id(&self) -> Entity {
@@ -44,4 +41,3 @@ pub struct Collisions(pub Vec<Collision>);
 pub struct Triggers(pub Vec<Collision>);
 
 pub struct Velocity(pub Vector3<f32>);
-

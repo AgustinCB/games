@@ -36,7 +36,9 @@ impl System for BouncingControlsSystem {
     fn update(&self, world: &mut World, delta_time: u64) -> Result<(), MageError> {
         let mut broken_blocks = vec![];
         let multiplier = delta_time as f32 / 1000.0;
-        for (_, (collisions, props, velocity)) in world.query_mut::<(&Collisions, &mut BouncingProperties, &mut Velocity)>() {
+        for (_, (collisions, props, velocity)) in
+        world.query_mut::<(&Collisions, &mut BouncingProperties, &mut Velocity)>()
+        {
             let (mut x, mut y) = (false, false);
             for collision in &collisions.0 {
                 if let Collision::Started(entity_id, contact_pair, user_data) = collision {
@@ -44,16 +46,16 @@ impl System for BouncingControlsSystem {
                     match element {
                         LevelElement::RightWall => {
                             x = true;
-                        },
+                        }
                         LevelElement::LeftWall => {
                             x = true;
-                        },
+                        }
                         LevelElement::TopWall => {
                             y = true;
-                        },
+                        }
                         LevelElement::Player => {
                             y = true;
-                        },
+                        }
                         LevelElement::Block | LevelElement::SolidBlock => {
                             if let Some((contact, _)) = contact_pair.find_deepest_contact() {
                                 if contact.local_n1.x.abs() > contact.local_n1.y.abs() {
@@ -65,11 +67,12 @@ impl System for BouncingControlsSystem {
                                     broken_blocks.push(*entity_id);
                                 }
                             }
-                        },
+                        }
                         LevelElement::BottomWall => {
-                            self.game_state.store(GameState::Loose as u8, Ordering::Relaxed);
+                            self.game_state
+                                .store(GameState::Loose as u8, Ordering::Relaxed);
                             return Ok(());
-                        },
+                        }
                         _ => {}
                     }
                 }

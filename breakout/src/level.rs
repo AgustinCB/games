@@ -63,9 +63,9 @@ enum Brick {
     YellowBlock,
 }
 
-impl Into<LevelElement> for Brick {
-    fn into(self) -> LevelElement {
-        match self {
+impl From<Brick> for LevelElement {
+    fn from(brick: Brick) -> LevelElement {
+        match brick {
             Brick::SolidBlock => LevelElement::SolidBlock,
             _ => LevelElement::Block,
         }
@@ -174,13 +174,15 @@ impl Level {
         }
     }
 
-    fn spawn_brick(&self, world: &mut World, brick: Brick, mesh: &RenderingMesh, transform: Transform) {
+    fn spawn_brick(
+        &self,
+        world: &mut World,
+        brick: Brick,
+        mesh: &RenderingMesh,
+        transform: Transform,
+    ) {
         let element = Into::<LevelElement>::into(brick);
-        let collider = ColliderBuilder::cuboid(
-            self.unit_width / 2.0,
-            self.unit_height / 2.0,
-            0.1,
-        )
+        let collider = ColliderBuilder::cuboid(self.unit_width / 2.0, self.unit_height / 2.0, 0.1)
             .translation(transform.position)
             .user_data(element as _)
             .build();

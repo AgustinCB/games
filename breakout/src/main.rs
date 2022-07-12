@@ -12,7 +12,9 @@ use mage::core::game::{Game, GameBuilder};
 use mage::gameplay::camera::{Fixed2dCamera, Fixed2dCameraBuilder};
 use mage::gameplay::input::{Input, InputType};
 use mage::MageError;
-use mage::physics::{ActiveCollisionTypes, ActiveEvents, ColliderBuilder, Collisions, RigidBodyBuilder, Velocity};
+use mage::physics::{
+    ActiveCollisionTypes, ActiveEvents, ColliderBuilder, Collisions, RigidBodyBuilder, Velocity,
+};
 use mage::rendering::engine::SimpleEngine;
 use mage::rendering::model::cube::rectangle;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource, TextureType};
@@ -193,7 +195,14 @@ fn main() {
     let status = Arc::new(AtomicU8::new(GameState::Active as _));
     game.play(vec![
         Box::new(
-            game_logic::GameLogic::new(texture_loader, textures, WIDTH as _, HEIGHT as _, status.clone()).unwrap(),
+            game_logic::GameLogic::new(
+                texture_loader,
+                textures,
+                WIDTH as _,
+                HEIGHT as _,
+                status.clone(),
+            )
+                .unwrap(),
         ),
         Box::new(player_controls::PlayerControlsSystem {
             hx: PLAYER_WIDTH / 2.0,
@@ -201,19 +210,12 @@ fn main() {
             against_left_wall: RefCell::new(false),
             against_right_wall: RefCell::new(false),
         }),
-        Box::new(
-            BouncingControlsSystem {
-                game_state: status,
-            }
-        ),
+        Box::new(BouncingControlsSystem { game_state: status }),
     ])
         .unwrap();
 }
 
-fn add_map(
-    textures: &GameTextures,
-    game: &mut Game<SimpleEngine<Fixed2dCamera>>,
-) {
+fn add_map(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>>) {
     let background_position = Vector3::new(WIDTH / 2.0, HEIGHT / 2.0, 0.0);
     let transform = TransformBuilder::new()
         .with_position(background_position)
@@ -222,18 +224,38 @@ fn add_map(
         rectangle(WIDTH / 2.0, HEIGHT / 2.0, vec![textures.background.clone()]),
         transform,
     ));
-    add_frontier(game, Vector3::new(
-        WIDTH / 2.0, -0.5, 0.0,
-    ), WIDTH / 2.0, 0.5, true, LevelElement::BottomWall);
-    add_frontier(game, Vector3::new(
-        WIDTH / 2.0, HEIGHT + 0.5, 0.0,
-    ), WIDTH / 2.0, 0.5, false, LevelElement::TopWall);
-    add_frontier(game, Vector3::new(
-        -0.5, HEIGHT / 2.0, 0.0,
-    ), 0.5, HEIGHT / 2.0, false, LevelElement::LeftWall);
-    add_frontier(game, Vector3::new(
-        WIDTH + 0.5, HEIGHT / 2.0, 0.0,
-    ), 0.5, HEIGHT / 2.0, false, LevelElement::RightWall);
+    add_frontier(
+        game,
+        Vector3::new(WIDTH / 2.0, -0.5, 0.0),
+        WIDTH / 2.0,
+        0.5,
+        true,
+        LevelElement::BottomWall,
+    );
+    add_frontier(
+        game,
+        Vector3::new(WIDTH / 2.0, HEIGHT + 0.5, 0.0),
+        WIDTH / 2.0,
+        0.5,
+        false,
+        LevelElement::TopWall,
+    );
+    add_frontier(
+        game,
+        Vector3::new(-0.5, HEIGHT / 2.0, 0.0),
+        0.5,
+        HEIGHT / 2.0,
+        false,
+        LevelElement::LeftWall,
+    );
+    add_frontier(
+        game,
+        Vector3::new(WIDTH + 0.5, HEIGHT / 2.0, 0.0),
+        0.5,
+        HEIGHT / 2.0,
+        false,
+        LevelElement::RightWall,
+    );
 }
 
 fn add_frontier(
@@ -244,9 +266,7 @@ fn add_frontier(
     is_sensor: bool,
     element: LevelElement,
 ) {
-    let transform = TransformBuilder::new()
-        .with_position(position)
-        .build();
+    let transform = TransformBuilder::new().with_position(position).build();
     let frontier = game.spawn((transform, ));
     let collider = ColliderBuilder::cuboid(hx, hy, 1.0)
         .user_data(element as _)
@@ -257,20 +277,11 @@ fn add_frontier(
     game.add_collider(frontier, collider);
 }
 
-fn add_ball(
-    textures: &GameTextures,
-    game: &mut Game<SimpleEngine<Fixed2dCamera>>,
-) {
+fn add_ball(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>>) {
     let position = Vector3::new(WIDTH / 2.0, HEIGHT / 2.0 - BALL_RADIUS * 2.0, 0.3);
-    let transform = TransformBuilder::new()
-        .with_position(position)
-        .build();
+    let transform = TransformBuilder::new().with_position(position).build();
     let handle = game.spawn((
-        rectangle(
-            BALL_RADIUS,
-            BALL_RADIUS,
-            vec![textures.ball.clone()],
-        ),
+        rectangle(BALL_RADIUS, BALL_RADIUS, vec![textures.ball.clone()]),
         transform,
         Collisions(vec![]),
         Velocity(Vector3::zeros()),
@@ -284,15 +295,14 @@ fn add_ball(
     let collider = ColliderBuilder::ball(BALL_RADIUS)
         .user_data(LevelElement::Ball as _)
         .active_events(ActiveEvents::COLLISION_EVENTS)
-        .active_collision_types(ActiveCollisionTypes::KINEMATIC_KINEMATIC | ActiveCollisionTypes::KINEMATIC_STATIC)
+        .active_collision_types(
+            ActiveCollisionTypes::KINEMATIC_KINEMATIC | ActiveCollisionTypes::KINEMATIC_STATIC,
+        )
         .build();
     game.add_collider_and_rigidbody(handle, collider, rigidbody);
 }
 
-fn add_player(
-    textures: &GameTextures,
-    game: &mut Game<SimpleEngine<Fixed2dCamera>>,
-) {
+fn add_player(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>>) {
     let player_position = Vector3::new(WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 0.3);
     let player_transform = TransformBuilder::new()
         .with_position(player_position)
@@ -319,7 +329,9 @@ fn add_player(
     let collider = ColliderBuilder::cuboid(PLAYER_WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 0.1)
         .user_data(LevelElement::Player as u128)
         .active_events(ActiveEvents::COLLISION_EVENTS)
-        .active_collision_types(ActiveCollisionTypes::KINEMATIC_KINEMATIC | ActiveCollisionTypes::KINEMATIC_STATIC)
+        .active_collision_types(
+            ActiveCollisionTypes::KINEMATIC_KINEMATIC | ActiveCollisionTypes::KINEMATIC_STATIC,
+        )
         .build();
     game.add_collider_and_rigidbody(player_handle, collider, rigidbody);
 }
