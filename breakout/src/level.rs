@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use hecs::World;
+use log::error;
 use nalgebra::Vector3;
 use thiserror::Error;
 
@@ -39,6 +40,12 @@ impl From<u8> for LevelElement {
             7 => LevelElement::BottomWall,
             _ => panic!("Invalid element conversion"),
         }
+    }
+}
+
+impl LevelElement {
+    pub(crate) fn is_block(&self) -> bool {
+        matches!(self, LevelElement::Ball | LevelElement::SolidBlock)
     }
 }
 
@@ -90,6 +97,10 @@ impl TryFrom<u8> for Brick {
 }
 
 impl Brick {
+    fn is_solid(&self) -> bool {
+        self == &Brick::SolidBlock
+    }
+
     fn is_visible(&self) -> bool {
         self != &Brick::Empty
     }
@@ -187,5 +198,13 @@ impl Level {
             .user_data(element as _)
             .build();
         world.spawn((brick, transform, mesh.clone(), collider));
+    }
+
+    pub(crate) fn is_complete(world: &mut World) -> bool {
+        world.query_mut::<&Brick>()
+            .into_iter()
+            .filter(|(_, b)| b.is_visible() && !b.is_solid())
+            .next()
+            .is_none()
     }
 }

@@ -1,13 +1,17 @@
+use std::cell::RefCell;
 use std::sync::Arc;
-use std::sync::atomic::AtomicU8;
+use std::sync::atomic::{AtomicU8, Ordering};
 
-use hecs::World;
+use hecs::{Entity, World};
+use log::error;
+use nalgebra::Vector3;
 
 use mage::core::system::System;
 use mage::MageError;
+use mage::rendering::Transform;
 use mage::resources::texture::TextureLoader;
 
-use crate::GameTextures;
+use crate::{GameTextures, LevelElement};
 use crate::level::Level;
 
 #[repr(u8)]
@@ -17,6 +21,8 @@ pub(crate) enum GameState {
     Win,
     Loose,
 }
+
+pub(crate) struct StartingPosition(pub(crate) Vector3<f32>);
 
 impl From<u8> for GameState {
     fn from(val: u8) -> GameState {
@@ -30,12 +36,18 @@ impl From<u8> for GameState {
     }
 }
 
+fn load_starting_positions(world: &mut World) {
+    for (_, (transform, starting_position)) in world.query_mut::<(&mut Transform, &StartingPosition)>() {
+        transform.position = starting_position.0;
+    }
+}
+
 pub(crate) struct GameLogic {
     game_textures: GameTextures,
     _height: u32,
-    level: usize,
+    level: RefCell<usize>,
     levels: Vec<Level>,
-    _state: Arc<AtomicU8>,
+    state: Arc<AtomicU8>,
     texture_loader: Arc<TextureLoader>,
     _width: u32,
 }
@@ -48,7 +60,7 @@ impl GameLogic {
         state: Arc<AtomicU8>,
     ) -> Result<GameLogic, MageError> {
         Ok(GameLogic {
-            level: 0,
+            level: RefCell::new(0),
             levels: vec![
                 Level::new(
                     include_bytes!("../resources/level1").iter().cloned(),
@@ -86,8 +98,8 @@ impl GameLogic {
                     width,
                 )?,
             ],
-            _state: state,
             game_textures,
+            state,
             texture_loader,
             _height: height,
             _width: width,
@@ -95,7 +107,8 @@ impl GameLogic {
     }
 
     fn load_level(&self, world: &mut World) {
-        self.levels[self.level].load(world);
+        self.levels[*self.level.borrow()].load(world);
+        load_starting_positions(world);
     }
 }
 
@@ -104,7 +117,7 @@ impl System for GameLogic {
         "Game Logic"
     }
 
-    fn start(&self, world: &mut hecs::World) -> Result<(), MageError> {
+    fn start(&self, world: &mut World) -> Result<(), MageError> {
         self.texture_loader
             .load_texture_2d(&self.game_textures.background)?;
         self.texture_loader
@@ -127,25 +140,49 @@ impl System for GameLogic {
 
     fn early_update(
         &self,
-        _: &mut hecs::World,
+        _: &mut World,
         _: u64,
-    ) -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    ) -> Result<(), MageError> {
         Ok(())
     }
 
     fn update(
         &self,
-        _: &mut hecs::World,
+        _: &mut World,
         _: u64,
-    ) -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    ) -> Result<(), MageError> {
         Ok(())
     }
 
     fn late_update(
         &self,
-        _: &mut hecs::World,
+        world: &mut World,
         _: u64,
-    ) -> Result<(), Box<(dyn std::error::Error + 'static)>> {
+    ) -> Result<(), MageError> {
+        match GameState::from(self.state.load(Ordering::Relaxed)) {
+            GameState::Loose => {
+                let bricks = world.query_mut::<&LevelElement>()
+                    .into_iter()
+                    .filter(|(_, le)| le.is_block())
+                    .map(|(e, _)| e)
+                    .collect::<Vec<Entity>>();
+                bricks.into_iter()
+                    .for_each(|e| {
+                        world.despawn(e).unwrap();
+                    });
+                self.level.replace(0);
+                self.load_level(world);
+                self.state.store(GameState::Active as u8, Ordering::Relaxed);
+            }
+            GameState::Active => {
+                if Level::is_complete(world) {
+                    let level = *self.level.borrow();
+                    self.level.replace((level + 1) % self.levels.len());
+                    self.load_level(world);
+                }
+            }
+            _ => {}
+        }
         Ok(())
     }
 }

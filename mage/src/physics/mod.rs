@@ -12,24 +12,25 @@ pub mod scalable_shape;
 #[derive(Clone)]
 pub enum Collision {
     Started(Entity, ContactPair, u128),
+    StartedTrigger(Entity, u128),
     Stopped(Entity, u128),
 }
 
 impl Collision {
     pub fn started(&self) -> bool {
-        matches!(self, Collision::Started(_, _, _))
+        matches!(self, Collision::Started(_, _, _) | Collision::StartedTrigger(_, _))
     }
 
     pub fn entity_id(&self) -> Entity {
         match self {
-            Collision::Started(entity, _, _) => *entity,
+            Collision::Started(entity, _, _) | Collision::StartedTrigger(entity, _) |
             Collision::Stopped(entity, _) => *entity,
         }
     }
 
     pub fn user_data(&self) -> u128 {
         match self {
-            Collision::Started(_, _, u) => *u,
+            Collision::Started(_, _, u) | Collision::StartedTrigger(_, u) |
             Collision::Stopped(_, u) => *u,
         }
     }

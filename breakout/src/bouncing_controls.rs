@@ -2,11 +2,12 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU8, Ordering};
 
 use hecs::World;
+use log::error;
 use nalgebra::{Vector2, Vector3};
 
 use mage::core::system::System;
 use mage::MageError;
-use mage::physics::{Collision, Collisions, Velocity};
+use mage::physics::{Collision, Collisions, Triggers, Velocity};
 
 use crate::game_logic::GameState;
 use crate::LevelElement;
@@ -34,6 +35,32 @@ impl System for BouncingControlsSystem {
     }
 
     fn update(&self, world: &mut World, delta_time: u64) -> Result<(), MageError> {
+        self.check_triggers(world);
+        self.check_collisions(world, delta_time)?;
+        Ok(())
+    }
+
+    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
+        Ok(())
+    }
+}
+
+impl BouncingControlsSystem {
+    fn check_triggers(&self, world: &mut World) {
+        for (_, triggers) in world.query_mut::<&Triggers>().with::<BouncingProperties>() {
+            for collision in &triggers.0 {
+                if let Collision::StartedTrigger(_, user_data) = collision {
+                    if let LevelElement::BottomWall = LevelElement::from(*user_data as u8) {
+                        self.game_state
+                            .store(GameState::Loose as u8, Ordering::Relaxed);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    fn check_collisions(&self, world: &mut World, delta_time: u64) -> Result<(), MageError> {
         let mut broken_blocks = vec![];
         let multiplier = delta_time as f32 / 1000.0;
         for (_, (collisions, props, velocity)) in
@@ -68,11 +95,6 @@ impl System for BouncingControlsSystem {
                                 }
                             }
                         }
-                        LevelElement::BottomWall => {
-                            self.game_state
-                                .store(GameState::Loose as u8, Ordering::Relaxed);
-                            return Ok(());
-                        }
                         _ => {}
                     }
                 }
@@ -88,10 +110,6 @@ impl System for BouncingControlsSystem {
         for broken_block in broken_blocks {
             world.despawn(broken_block)?;
         }
-        Ok(())
-    }
-
-    fn late_update(&self, _world: &mut World, _delta_time: u64) -> Result<(), MageError> {
         Ok(())
     }
 }

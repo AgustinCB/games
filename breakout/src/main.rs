@@ -12,9 +12,7 @@ use mage::core::game::{Game, GameBuilder};
 use mage::gameplay::camera::{Fixed2dCamera, Fixed2dCameraBuilder};
 use mage::gameplay::input::{Input, InputType};
 use mage::MageError;
-use mage::physics::{
-    ActiveCollisionTypes, ActiveEvents, ColliderBuilder, Collisions, RigidBodyBuilder, Velocity,
-};
+use mage::physics::{ActiveCollisionTypes, ActiveEvents, ColliderBuilder, Collisions, RigidBodyBuilder, Triggers, Velocity};
 use mage::rendering::engine::SimpleEngine;
 use mage::rendering::model::cube::rectangle;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource, TextureType};
@@ -23,7 +21,7 @@ use mage::rendering::TransformBuilder;
 use mage::resources::texture::TextureLoader;
 
 use crate::bouncing_controls::{BouncingControlsSystem, BouncingProperties};
-use crate::game_logic::GameState;
+use crate::game_logic::{GameState, StartingPosition};
 use crate::level::LevelElement;
 use crate::player_controls::PlayerVelocity;
 
@@ -279,12 +277,14 @@ fn add_frontier(
 
 fn add_ball(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>>) {
     let position = Vector3::new(WIDTH / 2.0, HEIGHT / 2.0 - BALL_RADIUS * 2.0, 0.3);
-    let transform = TransformBuilder::new().with_position(position).build();
+    let transform = TransformBuilder::new().build();
     let handle = game.spawn((
         rectangle(BALL_RADIUS, BALL_RADIUS, vec![textures.ball.clone()]),
         transform,
         Collisions(vec![]),
+        Triggers(vec![]),
         Velocity(Vector3::zeros()),
+        StartingPosition(position),
         BouncingProperties {
             velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y),
         },
@@ -304,9 +304,7 @@ fn add_ball(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>
 
 fn add_player(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>>) {
     let player_position = Vector3::new(WIDTH / 2.0, PLAYER_HEIGHT / 2.0, 0.3);
-    let player_transform = TransformBuilder::new()
-        .with_position(player_position)
-        .build();
+    let player_transform = TransformBuilder::new().build();
     let player_handle = game.spawn((
         rectangle(
             PLAYER_WIDTH / 2.0,
@@ -320,6 +318,7 @@ fn add_player(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamer
         },
         Collisions(vec![]),
         PlayerVelocity(INITIAL_PLAYER_VELOCITY as f32),
+        StartingPosition(player_position),
         Velocity(Vector3::zeros()),
     ));
     let rigidbody = RigidBodyBuilder::kinematic_velocity_based()
