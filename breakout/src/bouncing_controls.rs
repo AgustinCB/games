@@ -64,7 +64,7 @@ impl BouncingControlsSystem {
     fn check_collisions(&self, world: &mut World, delta_time: u64) -> Result<(), MageError> {
         let mut broken_blocks = vec![];
         for (_, (collisions, props, velocity)) in
-        world.query_mut::<(&Collisions, &mut BouncingProperties, &mut Velocity)>()
+            world.query_mut::<(&Collisions, &mut BouncingProperties, &mut Velocity)>()
         {
             let (mut x, mut y) = (false, false);
             for collision in &collisions.0 {
@@ -85,7 +85,8 @@ impl BouncingControlsSystem {
                                 let old_velocity = props.current_velocity;
                                 props.current_velocity.y *= -1.0;
                                 props.current_velocity.x = props.initial_velocity.x * multiplier;
-                                props.current_velocity = props.current_velocity.normalize() * old_velocity.norm();
+                                props.current_velocity =
+                                    props.current_velocity.normalize() * old_velocity.norm();
                             }
                         }
                         element @ (LevelElement::Block | LevelElement::SolidBlock) => {
@@ -106,8 +107,8 @@ impl BouncingControlsSystem {
             }
             props.current_velocity.x *= x.then_some(-1.0).unwrap_or(1.0);
             props.current_velocity.y *= y.then_some(-1.0).unwrap_or(1.0);
-            velocity.0 = Vector3::new(props.current_velocity.x, props.current_velocity.y, 0.0) *
-                (delta_time as f32);
+            velocity.0 = Vector3::new(props.current_velocity.x, props.current_velocity.y, 0.0)
+                * delta_time as f32;
         }
         for broken_block in broken_blocks {
             world.despawn(broken_block)?;

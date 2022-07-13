@@ -12,7 +12,10 @@ use mage::core::game::{Game, GameBuilder};
 use mage::gameplay::camera::{Fixed2dCamera, Fixed2dCameraBuilder};
 use mage::gameplay::input::{Input, InputType};
 use mage::MageError;
-use mage::physics::{ActiveCollisionTypes, ActiveEvents, ColliderBuilder, Collisions, RigidBodyBuilder, Triggers, Velocity};
+use mage::physics::{
+    ActiveCollisionTypes, ActiveEvents, ColliderBuilder, Collisions, RigidBodyBuilder, Triggers,
+    Velocity,
+};
 use mage::rendering::engine::SimpleEngine;
 use mage::rendering::model::cube::rectangle;
 use mage::rendering::model::mesh::{TextureInfo, TextureSource, TextureType};

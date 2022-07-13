@@ -201,10 +201,9 @@ impl Level {
     }
 
     pub(crate) fn is_complete(world: &mut World) -> bool {
-        world.query_mut::<&Brick>()
+        !world
+            .query_mut::<&Brick>()
             .into_iter()
-            .filter(|(_, b)| b.is_visible() && !b.is_solid())
-            .next()
-            .is_none()
+            .any(|(_, b)| b.is_visible() && !b.is_solid())
     }
 }

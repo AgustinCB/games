@@ -40,11 +40,15 @@ impl From<u8> for GameState {
 }
 
 fn load_starting_properties(world: &mut World) {
-    for (_, (transform, velocity, starting_position)) in world.query_mut::<(&mut Transform, &mut Velocity, &StartingProperties)>() {
+    for (_, (transform, velocity, starting_position)) in
+    world.query_mut::<(&mut Transform, &mut Velocity, &StartingProperties)>()
+    {
         transform.position = starting_position.position;
         velocity.0 = starting_position.velocity;
     }
-    for (_, (props, starting_properties)) in world.query_mut::<(&mut BouncingProperties, &StartingProperties)>() {
+    for (_, (props, starting_properties)) in
+    world.query_mut::<(&mut BouncingProperties, &StartingProperties)>()
+    {
         props.initial_velocity = starting_properties.velocity.xy();
         props.current_velocity = props.initial_velocity;
     }
@@ -146,38 +150,27 @@ impl System for GameLogic {
         Ok(())
     }
 
-    fn early_update(
-        &self,
-        _: &mut World,
-        _: u64,
-    ) -> Result<(), MageError> {
+    fn early_update(&self, _: &mut World, _: u64) -> Result<(), MageError> {
         Ok(())
     }
 
-    fn update(
-        &self,
-        _: &mut World,
-        _: u64,
-    ) -> Result<(), MageError> {
+    fn update(&self, _: &mut World, _: u64) -> Result<(), MageError> {
         Ok(())
     }
 
-    fn late_update(
-        &self,
-        world: &mut World,
-        _: u64,
-    ) -> Result<(), MageError> {
+    fn late_update(&self, world: &mut World, _: u64) -> Result<(), MageError> {
         match GameState::from(self.state.load(Ordering::Relaxed)) {
             GameState::Loose => {
-                let bricks = world.query_mut::<&LevelElement>()
+                #[allow(clippy::needless_collect)]
+                    let bricks = world
+                    .query_mut::<&LevelElement>()
                     .into_iter()
                     .filter(|(_, le)| le.is_block())
                     .map(|(e, _)| e)
                     .collect::<Vec<Entity>>();
-                bricks.into_iter()
-                    .for_each(|e| {
-                        world.despawn(e).unwrap();
-                    });
+                bricks.into_iter().for_each(|e| {
+                    world.despawn(e).unwrap();
+                });
                 self.level.replace(0);
                 self.load_level(world);
                 self.state.store(GameState::Active as u8, Ordering::Relaxed);

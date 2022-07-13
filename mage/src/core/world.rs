@@ -114,7 +114,7 @@ impl World {
                 continue;
             }
             if let Some(mut transform) =
-            handle_result(self.world.query_one::<&mut Transform>(entity))
+                handle_result(self.world.query_one::<&mut Transform>(entity))
             {
                 if let Some(transform) = transform.get() {
                     if !c
@@ -233,44 +233,71 @@ impl World {
         let mut collisions_per_entity = HashMap::new();
         let mut triggers_per_entity = HashMap::new();
         while !self.events_receiver.is_empty() {
-            if let Some(collision) = handle_result(self.events_receiver.recv_timeout(Duration::from_nanos(0))) {
-                let entity_handler1 =
-                    self.physics_engine.get_entity_from_collider(collision.collider1());
-                let entity_handler2 =
-                    self.physics_engine.get_entity_from_collider(collision.collider2());
-                let user_data1 = self.physics_engine.get_user_data_from_collider(collision.collider1());
-                let user_data2 = self.physics_engine.get_user_data_from_collider(collision.collider2());
+            if let Some(collision) =
+            handle_result(self.events_receiver.recv_timeout(Duration::from_nanos(0)))
+            {
+                let entity_handler1 = self
+                    .physics_engine
+                    .get_entity_from_collider(collision.collider1());
+                let entity_handler2 = self
+                    .physics_engine
+                    .get_entity_from_collider(collision.collider2());
+                let user_data1 = self
+                    .physics_engine
+                    .get_user_data_from_collider(collision.collider1());
+                let user_data2 = self
+                    .physics_engine
+                    .get_user_data_from_collider(collision.collider2());
                 let collection = if collision.sensor() {
                     &mut triggers_per_entity
                 } else {
                     &mut collisions_per_entity
                 };
                 if let (
-                    Some(entity_handler1), Some(entity_handler2), Some(user_data1), Some(user_data2)
-                ) = (entity_handler1, entity_handler2, user_data1, user_data2) {
+                    Some(entity_handler1),
+                    Some(entity_handler2),
+                    Some(user_data1),
+                    Some(user_data2),
+                ) = (entity_handler1, entity_handler2, user_data1, user_data2)
+                {
                     if collision.started() {
-                        if let Some(contact_pair) = self.physics_engine.contact_pair(collision.collider1(), collision.collider2()) {
+                        if let Some(contact_pair) = self
+                            .physics_engine
+                            .contact_pair(collision.collider1(), collision.collider2())
+                        {
                             collection.entry(entity_handler2).or_insert(vec![]).push(
-                                Collision::Started(entity_handler1, contact_pair.clone(), user_data1),
+                                Collision::Started(
+                                    entity_handler1,
+                                    contact_pair.clone(),
+                                    user_data1,
+                                ),
                             );
                             collection.entry(entity_handler1).or_insert(vec![]).push(
-                                Collision::Started(entity_handler2, contact_pair.clone(), user_data2),
+                                Collision::Started(
+                                    entity_handler2,
+                                    contact_pair.clone(),
+                                    user_data2,
+                                ),
                             );
                         } else {
-                            collection.entry(entity_handler2).or_insert(vec![]).push(
-                                Collision::StartedTrigger(entity_handler1, user_data1),
-                            );
-                            collection.entry(entity_handler1).or_insert(vec![]).push(
-                                Collision::StartedTrigger(entity_handler2, user_data2),
-                            );
+                            collection
+                                .entry(entity_handler2)
+                                .or_insert(vec![])
+                                .push(Collision::StartedTrigger(entity_handler1, user_data1));
+                            collection
+                                .entry(entity_handler1)
+                                .or_insert(vec![])
+                                .push(Collision::StartedTrigger(entity_handler2, user_data2));
                         }
                     } else {
-                        collection.entry(entity_handler2).or_insert(vec![]).push(
-                            Collision::Stopped(entity_handler1, user_data1),
-                        );
-                        collection.entry(entity_handler1).or_insert(vec![]).push(
-                            Collision::Stopped(entity_handler2, user_data2),
-                        );
+                        collection
+                            .entry(entity_handler2)
+                            .or_insert(vec![])
+                            .push(Collision::Stopped(entity_handler1, user_data1));
+                        collection
+                            .entry(entity_handler1)
+                            .or_insert(vec![])
+                            .push(Collision::Stopped(entity_handler2, user_data2));
                     }
                 }
             }
