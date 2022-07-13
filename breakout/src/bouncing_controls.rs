@@ -2,7 +2,6 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU8, Ordering};
 
 use hecs::World;
-use log::error;
 use nalgebra::{Vector2, Vector3};
 
 use mage::core::system::System;
@@ -14,7 +13,9 @@ use crate::LevelElement;
 
 #[derive(Clone, Debug)]
 pub(crate) struct BouncingProperties {
-    pub(crate) velocity: Vector2<f32>,
+    pub(crate) initial_velocity: Vector2<f32>,
+    pub(crate) current_velocity: Vector2<f32>,
+    pub(crate) max_distance: f32,
 }
 
 pub(crate) struct BouncingControlsSystem {
@@ -62,15 +63,13 @@ impl BouncingControlsSystem {
 
     fn check_collisions(&self, world: &mut World, delta_time: u64) -> Result<(), MageError> {
         let mut broken_blocks = vec![];
-        let multiplier = delta_time as f32 / 1000.0;
         for (_, (collisions, props, velocity)) in
         world.query_mut::<(&Collisions, &mut BouncingProperties, &mut Velocity)>()
         {
             let (mut x, mut y) = (false, false);
             for collision in &collisions.0 {
                 if let Collision::Started(entity_id, contact_pair, user_data) = collision {
-                    let element = LevelElement::from(*user_data as u8);
-                    match element {
+                    match LevelElement::from(*user_data as u8) {
                         LevelElement::RightWall => {
                             x = true;
                         }
@@ -81,9 +80,15 @@ impl BouncingControlsSystem {
                             y = true;
                         }
                         LevelElement::Player => {
-                            y = true;
+                            if let Some((_, contact)) = contact_pair.find_deepest_contact() {
+                                let multiplier = contact.local_p1.x / props.max_distance * 2.0;
+                                let old_velocity = props.current_velocity;
+                                props.current_velocity.y *= -1.0;
+                                props.current_velocity.x = props.initial_velocity.x * multiplier;
+                                props.current_velocity = props.current_velocity.normalize() * old_velocity.norm();
+                            }
                         }
-                        LevelElement::Block | LevelElement::SolidBlock => {
+                        element @ (LevelElement::Block | LevelElement::SolidBlock) => {
                             if let Some((contact, _)) = contact_pair.find_deepest_contact() {
                                 if contact.local_n1.x.abs() > contact.local_n1.y.abs() {
                                     x = true;
@@ -99,13 +104,10 @@ impl BouncingControlsSystem {
                     }
                 }
             }
-            props.velocity.x *= x.then_some(-1.0).unwrap_or(1.0);
-            props.velocity.y *= y.then_some(-1.0).unwrap_or(1.0);
-            velocity.0 = Vector3::new(
-                props.velocity.x * multiplier,
-                props.velocity.y * multiplier,
-                0.0,
-            );
+            props.current_velocity.x *= x.then_some(-1.0).unwrap_or(1.0);
+            props.current_velocity.y *= y.then_some(-1.0).unwrap_or(1.0);
+            velocity.0 = Vector3::new(props.current_velocity.x, props.current_velocity.y, 0.0) *
+                (delta_time as f32);
         }
         for broken_block in broken_blocks {
             world.despawn(broken_block)?;

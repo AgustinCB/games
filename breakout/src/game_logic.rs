@@ -3,15 +3,15 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU8, Ordering};
 
 use hecs::{Entity, World};
-use log::error;
 use nalgebra::Vector3;
 
 use mage::core::system::System;
 use mage::MageError;
+use mage::physics::Velocity;
 use mage::rendering::Transform;
 use mage::resources::texture::TextureLoader;
 
-use crate::{GameTextures, LevelElement};
+use crate::{BouncingProperties, GameTextures, LevelElement};
 use crate::level::Level;
 
 #[repr(u8)]
@@ -22,7 +22,10 @@ pub(crate) enum GameState {
     Loose,
 }
 
-pub(crate) struct StartingPosition(pub(crate) Vector3<f32>);
+pub(crate) struct StartingProperties {
+    pub(crate) position: Vector3<f32>,
+    pub(crate) velocity: Vector3<f32>,
+}
 
 impl From<u8> for GameState {
     fn from(val: u8) -> GameState {
@@ -36,9 +39,14 @@ impl From<u8> for GameState {
     }
 }
 
-fn load_starting_positions(world: &mut World) {
-    for (_, (transform, starting_position)) in world.query_mut::<(&mut Transform, &StartingPosition)>() {
-        transform.position = starting_position.0;
+fn load_starting_properties(world: &mut World) {
+    for (_, (transform, velocity, starting_position)) in world.query_mut::<(&mut Transform, &mut Velocity, &StartingProperties)>() {
+        transform.position = starting_position.position;
+        velocity.0 = starting_position.velocity;
+    }
+    for (_, (props, starting_properties)) in world.query_mut::<(&mut BouncingProperties, &StartingProperties)>() {
+        props.initial_velocity = starting_properties.velocity.xy();
+        props.current_velocity = props.initial_velocity;
     }
 }
 
@@ -108,7 +116,7 @@ impl GameLogic {
 
     fn load_level(&self, world: &mut World) {
         self.levels[*self.level.borrow()].load(world);
-        load_starting_positions(world);
+        load_starting_properties(world);
     }
 }
 

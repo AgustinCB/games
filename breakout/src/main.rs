@@ -21,7 +21,7 @@ use mage::rendering::TransformBuilder;
 use mage::resources::texture::TextureLoader;
 
 use crate::bouncing_controls::{BouncingControlsSystem, BouncingProperties};
-use crate::game_logic::{GameState, StartingPosition};
+use crate::game_logic::{GameState, StartingProperties};
 use crate::level::LevelElement;
 use crate::player_controls::PlayerVelocity;
 
@@ -32,8 +32,8 @@ mod player_controls;
 
 const BALL_RADIUS: f32 = 25.0;
 const HEIGHT: f32 = 600.0;
-const INITIAL_BALL_VELOCITY_X: f32 = 25.0 * 100.0;
-const INITIAL_BALL_VELOCITY_Y: f32 = 25.0 * -350.0;
+const INITIAL_BALL_VELOCITY_X: f32 = 100.0 / 25.0;
+const INITIAL_BALL_VELOCITY_Y: f32 = -350.0 / 25.0;
 const INITIAL_PLAYER_VELOCITY: u32 = 12500;
 const WIDTH: f32 = 800.0;
 const PLAYER_HEIGHT: f32 = 20.0;
@@ -284,9 +284,14 @@ fn add_ball(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>
         Collisions(vec![]),
         Triggers(vec![]),
         Velocity(Vector3::zeros()),
-        StartingPosition(position),
+        StartingProperties {
+            position,
+            velocity: Vector3::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y, 0.0),
+        },
         BouncingProperties {
-            velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y),
+            max_distance: PLAYER_WIDTH / 2.0,
+            initial_velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y),
+            current_velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y),
         },
     ));
     let rigidbody = RigidBodyBuilder::kinematic_velocity_based()
@@ -318,7 +323,10 @@ fn add_player(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamer
         },
         Collisions(vec![]),
         PlayerVelocity(INITIAL_PLAYER_VELOCITY as f32),
-        StartingPosition(player_position),
+        StartingProperties {
+            position: player_position,
+            velocity: Vector3::zeros(),
+        },
         Velocity(Vector3::zeros()),
     ));
     let rigidbody = RigidBodyBuilder::kinematic_velocity_based()
