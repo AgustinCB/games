@@ -12,6 +12,7 @@ use mage::rendering::Transform;
 use mage::resources::texture::TextureLoader;
 
 use crate::{BouncingProperties, GameTextures, LevelElement};
+use crate::bouncing_controls::BouncingStatus;
 use crate::level::Level;
 
 #[repr(u8)]
@@ -51,6 +52,7 @@ fn load_starting_properties(world: &mut World) {
     {
         props.initial_velocity = starting_properties.velocity.xy();
         props.current_velocity = props.initial_velocity;
+        props.status = BouncingStatus::Stuck;
     }
 }
 

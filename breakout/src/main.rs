@@ -4,7 +4,7 @@ extern crate core;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::atomic::AtomicU8;
+use std::sync::atomic::{AtomicBool, AtomicU8};
 
 use nalgebra::{Point2, Vector2, Vector3, Vector4};
 
@@ -23,7 +23,7 @@ use mage::rendering::opengl::texture::{TextureParameter, TextureParameterValue};
 use mage::rendering::TransformBuilder;
 use mage::resources::texture::TextureLoader;
 
-use crate::bouncing_controls::{BouncingControlsSystem, BouncingProperties};
+use crate::bouncing_controls::{BouncingControlsSystem, BouncingProperties, BouncingStatus};
 use crate::game_logic::{GameState, StartingProperties};
 use crate::level::LevelElement;
 use crate::player_controls::PlayerVelocity;
@@ -36,7 +36,7 @@ mod player_controls;
 const BALL_RADIUS: f32 = 25.0;
 const HEIGHT: f32 = 600.0;
 const INITIAL_BALL_VELOCITY_X: f32 = 100.0 / 25.0;
-const INITIAL_BALL_VELOCITY_Y: f32 = -350.0 / 25.0;
+const INITIAL_BALL_VELOCITY_Y: f32 = 350.0 / 25.0;
 const INITIAL_PLAYER_VELOCITY: u32 = 12500;
 const WIDTH: f32 = 800.0;
 const PLAYER_HEIGHT: f32 = 20.0;
@@ -194,6 +194,7 @@ fn main() {
     add_player(&textures, &mut game);
     add_ball(&textures, &mut game);
     let status = Arc::new(AtomicU8::new(GameState::Active as _));
+    let unstick = Arc::new(AtomicBool::default());
     game.play(vec![
         Box::new(
             game_logic::GameLogic::new(
@@ -206,12 +207,13 @@ fn main() {
                 .unwrap(),
         ),
         Box::new(player_controls::PlayerControlsSystem {
-            hx: PLAYER_WIDTH / 2.0,
-            width: WIDTH,
+            unstick: unstick.clone(),
             against_left_wall: RefCell::new(false),
             against_right_wall: RefCell::new(false),
+            hx: PLAYER_WIDTH / 2.0,
+            width: WIDTH,
         }),
-        Box::new(BouncingControlsSystem { game_state: status }),
+        Box::new(BouncingControlsSystem { unstick, game_state: status }),
     ])
         .unwrap();
 }
@@ -279,7 +281,11 @@ fn add_frontier(
 }
 
 fn add_ball(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>>) {
-    let position = Vector3::new(WIDTH / 2.0, HEIGHT / 2.0 - BALL_RADIUS * 2.0, 0.3);
+    let position = Vector3::new(
+        WIDTH / 2.0,
+        PLAYER_HEIGHT + BALL_RADIUS,
+        0.3,
+    );
     let transform = TransformBuilder::new().build();
     let handle = game.spawn((
         rectangle(BALL_RADIUS, BALL_RADIUS, vec![textures.ball.clone()]),
@@ -295,6 +301,7 @@ fn add_ball(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>
             max_distance: PLAYER_WIDTH / 2.0,
             initial_velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y),
             current_velocity: Vector2::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y),
+            status: BouncingStatus::Stuck,
         },
     ));
     let rigidbody = RigidBodyBuilder::kinematic_velocity_based()

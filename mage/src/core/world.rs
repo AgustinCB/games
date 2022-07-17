@@ -302,21 +302,15 @@ impl World {
                 }
             }
         }
-        for (entity, collisions) in triggers_per_entity.into_iter() {
-            let _ = self
-                .world
-                .query_one_mut::<(&mut Triggers, )>(entity)
-                .map(|(mut r, )| {
-                    r.0 = collisions;
-                });
+        for (entity, triggers) in self.world.query_mut::<&mut Triggers>() {
+            if let Some(cs) = triggers_per_entity.remove(&entity) {
+                triggers.0 = cs;
+            }
         }
-        for (entity, collisions) in collisions_per_entity.into_iter() {
-            let _ = self
-                .world
-                .query_one_mut::<(&mut Collisions, )>(entity)
-                .map(|(mut r, )| {
-                    r.0 = collisions;
-                });
+        for (entity, collisions) in self.world.query_mut::<&mut Collisions>() {
+            if let Some(cs) = collisions_per_entity.remove(&entity) {
+                collisions.0 = cs;
+            }
         }
     }
 

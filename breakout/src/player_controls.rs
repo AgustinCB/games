@@ -1,4 +1,6 @@
 use std::cell::RefCell;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use hecs::World;
 use nalgebra::Vector3;
@@ -16,10 +18,11 @@ use crate::LevelElement;
 pub(crate) struct PlayerVelocity(pub(crate) f32);
 
 pub(crate) struct PlayerControlsSystem {
-    pub(crate) hx: f32,
-    pub(crate) width: f32,
     pub(crate) against_left_wall: RefCell<bool>,
     pub(crate) against_right_wall: RefCell<bool>,
+    pub(crate) hx: f32,
+    pub(crate) unstick: Arc<AtomicBool>,
+    pub(crate) width: f32,
 }
 
 impl System for PlayerControlsSystem {
@@ -79,6 +82,11 @@ impl System for PlayerControlsSystem {
                         ..
                     } if !*self.against_right_wall.borrow() => {
                         x_velocity += player_velocity;
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Space), ..
+                    } if !self.unstick.load(Ordering::Relaxed) => {
+                        self.unstick.store(true, Ordering::Relaxed);
                     }
                     _ => {}
                 }
