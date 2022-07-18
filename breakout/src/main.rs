@@ -186,6 +186,7 @@ fn main() {
         Fixed2dCameraBuilder::new(Point2::new(0.0, 0.0), Point2::new(WIDTH, HEIGHT)).build();
     let mut game = GameBuilder::new("Breakout", WIDTH as _, HEIGHT as _)
         .unwrap()
+        .with_blending()
         .with_frame_rate(1000 / 120)
         .build(
             SimpleEngine::new(camera, Vector3::new(0.0, 0.0, 0.0), texture_loader.clone()).unwrap(),

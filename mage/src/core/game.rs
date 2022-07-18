@@ -15,11 +15,12 @@ use crate::core::world::World;
 use crate::gameplay::input::{Input, InputSystem, InputType};
 use crate::gameplay::quit::{QuitControl, QuitSystem};
 use crate::MageError;
-use crate::rendering::engine::Engine;
+use crate::rendering::engine::{Engine, RenderingParameters};
 
 pub struct GameBuilder {
     frame_rate: Option<u64>,
     game_ended: Arc<AtomicBool>,
+    rendering_parameters: RenderingParameters,
     window: Window,
     world: World,
 }
@@ -31,6 +32,7 @@ impl GameBuilder {
         Ok(GameBuilder {
             frame_rate: None,
             game_ended: Arc::new(AtomicBool::new(false)),
+            rendering_parameters: RenderingParameters::default(),
             window,
             world,
         })
@@ -38,10 +40,35 @@ impl GameBuilder {
 }
 
 impl GameBuilder {
+    pub fn with_blending(self) -> Self {
+        let mut rendering_parameters = self.rendering_parameters;
+        rendering_parameters.blending_enabled = true;
+        GameBuilder {
+            rendering_parameters,
+            frame_rate: self.frame_rate,
+            game_ended: self.game_ended,
+            window: self.window,
+            world: self.world,
+        }
+    }
+
+    pub fn with_particles(self) -> Self {
+        let mut rendering_parameters = self.rendering_parameters;
+        rendering_parameters.particles_enabled = true;
+        GameBuilder {
+            rendering_parameters,
+            frame_rate: self.frame_rate,
+            game_ended: self.game_ended,
+            window: self.window,
+            world: self.world,
+        }
+    }
+
     pub fn with_frame_rate(self, frame_rate: u64) -> Self {
         GameBuilder {
             frame_rate: Some(frame_rate),
             game_ended: self.game_ended,
+            rendering_parameters: self.rendering_parameters,
             window: self.window,
             world: self.world,
         }
@@ -52,6 +79,7 @@ impl GameBuilder {
             engine,
             frame_rate: self.frame_rate.unwrap_or(1000 / 60), // 60 frames per second
             game_ended: self.game_ended,
+            rendering_parameters: self.rendering_parameters,
             window: self.window,
             world: self.world,
         }
@@ -62,6 +90,7 @@ pub struct Game<N: Engine> {
     engine: N,
     frame_rate: u64,
     game_ended: Arc<AtomicBool>,
+    rendering_parameters: RenderingParameters,
     window: Window,
     world: World,
 }
@@ -112,11 +141,13 @@ impl<N: Engine> Game<N> {
         self.world.add_system(Box::new(QuitSystem {
             game_ended: self.game_ended.clone(),
         }));
+        // TODO: If particles is enabled, add `ParticlesSystem`
+        // TODO: Create `ParticlesSystem`
         for system in systems {
             self.world.add_system(system);
         }
 
-        self.engine.setup(&mut self.world.world)?;
+        self.engine.setup(&mut self.world.world, self.rendering_parameters)?;
         self.world.start();
         let mut lag = 0;
         self.update_world(0);

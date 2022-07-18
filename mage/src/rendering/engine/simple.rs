@@ -8,7 +8,7 @@ use nalgebra::{Matrix4, Vector3, Vector4};
 
 use crate::gameplay::camera::Camera;
 use crate::MageError;
-use crate::rendering::engine::{Engine, SHADER_LIBRARY};
+use crate::rendering::engine::{Engine, RenderingParameters, SHADER_LIBRARY};
 use crate::rendering::model::mesh::{Mesh, RenderingMesh};
 use crate::rendering::opengl::{
     blend_func, clear, DrawingBuffer, enable, Factor, Feature, set_clear_color,
@@ -24,12 +24,13 @@ const VERTEX_SHADER: &str = "simple-rendering-vertex.glsl";
 const FRAGMENT_SHADER: &str = "simple-rendering-fragment.glsl";
 const DEBUG_ITERATION: usize = 100;
 
+// TODO: Add particles' program
 pub struct SimpleEngine<C: Camera> {
-    blending: bool,
     camera: C,
     clear_color: Vector3<f32>,
     iteration: AtomicUsize,
     program: Program,
+    rendering_parameters: RenderingParameters,
     texture_loader: Arc<TextureLoader>,
     uniform_buffer: Buffer,
 }
@@ -52,8 +53,8 @@ impl<C: Camera> SimpleEngine<C> {
         uniform_buffer.unbind();
         uniform_buffer.link_to_binding_point(0, 0, buffer_size);
         Ok(SimpleEngine {
-            blending: true,
             iteration: AtomicUsize::new(0),
+            rendering_parameters: RenderingParameters::default(),
             camera,
             clear_color,
             program,
@@ -77,9 +78,10 @@ impl<C: Camera> SimpleEngine<C> {
 }
 
 impl<C: Camera> Engine for SimpleEngine<C> {
-    fn setup(&self, world: &mut World) -> Result<(), MageError> {
+    fn setup(&mut self, world: &mut World, rendering_parameters: RenderingParameters) -> Result<(), MageError> {
+        self.rendering_parameters = rendering_parameters;
         enable(Feature::Depth);
-        if self.blending {
+        if self.rendering_parameters.blending_enabled {
             enable(Feature::Blend);
             blend_func(Factor::SrcAlpha, Factor::OneMinusSrcAlpha);
         }
@@ -104,7 +106,7 @@ impl<C: Camera> Engine for SimpleEngine<C> {
         self.program.use_program();
         self.setup_globals();
         let mut iter = world.query::<(&RenderingMesh, &Transform)>();
-        if !self.blending {
+        if !self.rendering_parameters.blending_enabled {
             for (_e, (mesh, transform)) in iter.iter() {
                 self.render_mesh(world, _e, mesh, transform)?;
             }
@@ -116,6 +118,9 @@ impl<C: Camera> Engine for SimpleEngine<C> {
                 self.render_mesh(world, _e, mesh, transform)?;
             }
         };
+        // TODO: Render particles
+        // TODO: Create `ParticlesParameters` with update configuration
+        // TODO: Create `Particles` component with the parameters and current status
         self.iteration.fetch_add(1, Ordering::Relaxed);
         Ok(())
     }
