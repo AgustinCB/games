@@ -11,6 +11,7 @@ use nalgebra::{Point2, Vector2, Vector3, Vector4};
 use mage::core::game::{Game, GameBuilder};
 use mage::gameplay::camera::{Fixed2dCamera, Fixed2dCameraBuilder};
 use mage::gameplay::input::{Input, InputType};
+use mage::gameplay::particles::{ParticleGenerator, ParticlesParametersBuilder};
 use mage::MageError;
 use mage::physics::{
     ActiveCollisionTypes, ActiveEvents, ColliderBuilder, Collisions, RigidBodyBuilder, Triggers,
@@ -187,6 +188,7 @@ fn main() {
     let mut game = GameBuilder::new("Breakout", WIDTH as _, HEIGHT as _)
         .unwrap()
         .with_blending()
+        .with_particles()
         .with_frame_rate(1000 / 120)
         .build(
             SimpleEngine::new(camera, Vector3::new(0.0, 0.0, 0.0), texture_loader.clone()).unwrap(),
@@ -287,12 +289,16 @@ fn add_frontier(
 fn add_ball(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>>) {
     let position = Vector3::new(WIDTH / 2.0, PLAYER_HEIGHT + BALL_RADIUS, 0.3);
     let transform = TransformBuilder::new().build();
+    let particles_parameters = ParticlesParametersBuilder::new()
+        .with_offset(Vector3::new(BALL_RADIUS / 2.0, BALL_RADIUS / 2.0, 0.0))
+        .build();
     let handle = game.spawn((
         rectangle(BALL_RADIUS, BALL_RADIUS, vec![textures.ball.clone()]),
         transform,
         Collisions(vec![]),
         Triggers(vec![]),
         Velocity(Vector3::zeros()),
+        ParticleGenerator::new(particles_parameters),
         StartingProperties {
             position,
             velocity: Vector3::new(INITIAL_BALL_VELOCITY_X, INITIAL_BALL_VELOCITY_Y, 0.0),

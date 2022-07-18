@@ -13,6 +13,7 @@ use crate::core::system::System;
 use crate::core::window::Window;
 use crate::core::world::World;
 use crate::gameplay::input::{Input, InputSystem, InputType};
+use crate::gameplay::particles::ParticlesSystem;
 use crate::gameplay::quit::{QuitControl, QuitSystem};
 use crate::MageError;
 use crate::rendering::engine::{Engine, RenderingParameters};
@@ -141,8 +142,9 @@ impl<N: Engine> Game<N> {
         self.world.add_system(Box::new(QuitSystem {
             game_ended: self.game_ended.clone(),
         }));
-        // TODO: If particles is enabled, add `ParticlesSystem`
-        // TODO: Create `ParticlesSystem`
+        if self.rendering_parameters.particles_enabled {
+            self.world.add_system(Box::new(ParticlesSystem::new()));
+        }
         for system in systems {
             self.world.add_system(system);
         }

@@ -180,7 +180,7 @@ impl World {
     fn update_transforms(&mut self) {
         for (entity, _r, r) in self.physics_engine.iter_rigidbody() {
             if let Some(transform) =
-            handle_result(self.world.query_one_mut::<&mut Transform>(entity))
+                handle_result(self.world.query_one_mut::<&mut Transform>(entity))
             {
                 transform.position = *r.translation();
                 transform.rotation = *r.rotation();

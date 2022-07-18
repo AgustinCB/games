@@ -48,7 +48,7 @@ fn load_starting_properties(world: &mut World) {
         velocity.0 = starting_position.velocity;
     }
     for (_, (props, starting_properties)) in
-    world.query_mut::<(&mut BouncingProperties, &StartingProperties)>()
+        world.query_mut::<(&mut BouncingProperties, &StartingProperties)>()
     {
         props.initial_velocity = starting_properties.velocity.xy();
         props.current_velocity = props.initial_velocity;

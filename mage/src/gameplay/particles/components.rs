@@ -1,8 +1,4 @@
-use std::cell::RefCell;
-
 use nalgebra::{Vector3, Vector4};
-use rand::{Rng, thread_rng};
-use rand::rngs::ThreadRng;
 
 pub struct ParticlesParametersBuilder {
     brightness_range: (f32, f32),
@@ -81,80 +77,26 @@ pub struct Particle {
 }
 
 pub struct ParticleGenerator {
-    pub(crate) last_used_particle: RefCell<usize>,
+    pub(crate) last_used_particle: usize,
     pub(crate) parameters: ParticlesParameters,
-    pub(crate) particles: Vec<RefCell<Particle>>,
-    pub(crate) rng: RefCell<ThreadRng>,
+    pub(crate) particles: Vec<Particle>,
 }
 
 impl ParticleGenerator {
     pub fn new(parameters: ParticlesParameters) -> ParticleGenerator {
         let mut particles = Vec::with_capacity(parameters.max_particles as _);
         for _ in 0..parameters.max_particles {
-            particles.push(RefCell::new(Particle {
+            particles.push(Particle {
                 color: Vector4::zeros(),
                 life: 0.0,
                 position: Vector3::zeros(),
                 velocity: Vector3::zeros(),
-            }));
+            });
         }
         ParticleGenerator {
-            last_used_particle: RefCell::new(0),
-            rng: RefCell::new(thread_rng()),
+            last_used_particle: 0,
             parameters,
             particles,
         }
-    }
-
-    pub fn update(&self, delta_time: f32, position: Vector3<f32>, velocity: Vector3<f32>) {
-        for _ in 0..self.parameters.new_particles_per_cycle {
-            self.respawn_particle(self.first_unused_particle(), position, velocity)
-        }
-        for i in 0..self.parameters.max_particles {
-            let velocity = self.particles[i as usize].borrow().velocity;
-            let mut p = self.particles[i as usize].borrow_mut();
-            if p.life > 0.0 {
-                p.life -= delta_time * self.parameters.dt_mult_life;
-                p.position -= velocity * delta_time;
-                p.color.z -= delta_time * self.parameters.dt_mult_alpha;
-            }
-        }
-    }
-
-    fn respawn_particle(&self, particle: usize, position: Vector3<f32>, velocity: Vector3<f32>) {
-        let random_position_offset = self.rng.borrow_mut().gen_range(
-            self.parameters.position_random_offset_range.0
-                ..self.parameters.position_random_offset_range.1,
-        );
-        let random_brightness = self
-            .rng
-            .borrow_mut()
-            .gen_range(self.parameters.brightness_range.0..self.parameters.brightness_range.1);
-        let mut particle = self.particles[particle].borrow_mut();
-        particle.position = Vector3::new(
-            position.x + random_position_offset + self.parameters.offset.x,
-            position.y + random_position_offset + self.parameters.offset.y,
-            position.z + random_position_offset + self.parameters.offset.z,
-        );
-        particle.color = Vector4::new(random_brightness, random_brightness, random_brightness, 1.0);
-        particle.life = 1.0;
-        particle.velocity = velocity * self.parameters.mult_velocity;
-    }
-
-    fn first_unused_particle(&self) -> usize {
-        for i in *self.last_used_particle.borrow()..self.parameters.max_particles as _ {
-            if self.particles[i].borrow().life <= 0.0 {
-                self.last_used_particle.replace(i as usize);
-                return i;
-            }
-        }
-        for i in 0..*self.last_used_particle.borrow() {
-            if self.particles[i].borrow().life <= 0.0 {
-                self.last_used_particle.replace(i as usize);
-                return i;
-            }
-        }
-        self.last_used_particle.replace(0);
-        0
     }
 }
