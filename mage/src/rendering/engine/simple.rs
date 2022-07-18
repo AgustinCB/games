@@ -119,8 +119,6 @@ impl<C: Camera> Engine for SimpleEngine<C> {
             }
         };
         // TODO: Render particles
-        // TODO: Create `ParticlesParameters` with update configuration
-        // TODO: Create `Particles` component with the parameters and current status
         self.iteration.fetch_add(1, Ordering::Relaxed);
         Ok(())
     }
