@@ -15,6 +15,12 @@ pub struct ParticlesParametersBuilder {
     position_random_offset_range: (f32, f32),
 }
 
+impl Default for ParticlesParametersBuilder {
+    fn default() -> Self {
+        ParticlesParametersBuilder::new()
+    }
+}
+
 impl ParticlesParametersBuilder {
     pub fn new() -> ParticlesParametersBuilder {
         ParticlesParametersBuilder {
@@ -102,11 +108,7 @@ impl ParticleGenerator {
 
     pub fn update(&self, delta_time: f32, position: Vector3<f32>, velocity: Vector3<f32>) {
         for _ in 0..self.parameters.new_particles_per_cycle {
-            self.respawn_particle(
-                self.first_unused_particle(),
-                position,
-                velocity,
-            )
+            self.respawn_particle(self.first_unused_particle(), position, velocity)
         }
         for i in 0..self.parameters.max_particles {
             let velocity = self.particles[i as usize].borrow().velocity;
@@ -121,11 +123,13 @@ impl ParticleGenerator {
 
     fn respawn_particle(&self, particle: usize, position: Vector3<f32>, velocity: Vector3<f32>) {
         let random_position_offset = self.rng.borrow_mut().gen_range(
-            self.parameters.position_random_offset_range.0..self.parameters.position_random_offset_range.1,
+            self.parameters.position_random_offset_range.0
+                ..self.parameters.position_random_offset_range.1,
         );
-        let random_brightness = self.rng.borrow_mut().gen_range(
-            self.parameters.brightness_range.0..self.parameters.brightness_range.1,
-        );
+        let random_brightness = self
+            .rng
+            .borrow_mut()
+            .gen_range(self.parameters.brightness_range.0..self.parameters.brightness_range.1);
         let mut particle = self.particles[particle].borrow_mut();
         particle.position = Vector3::new(
             position.x + random_position_offset + self.parameters.offset.x,
@@ -151,6 +155,6 @@ impl ParticleGenerator {
             }
         }
         self.last_used_particle.replace(0);
-        return 0;
+        0
     }
 }

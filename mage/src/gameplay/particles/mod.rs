@@ -1,3 +1,3 @@
-pub use particles::*;
+pub use components::*;
 
-mod particles;
+mod components;

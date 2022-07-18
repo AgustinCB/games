@@ -42,7 +42,7 @@ impl From<u8> for GameState {
 
 fn load_starting_properties(world: &mut World) {
     for (_, (transform, velocity, starting_position)) in
-    world.query_mut::<(&mut Transform, &mut Velocity, &StartingProperties)>()
+        world.query_mut::<(&mut Transform, &mut Velocity, &StartingProperties)>()
     {
         transform.position = starting_position.position;
         velocity.0 = starting_position.velocity;

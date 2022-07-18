@@ -39,12 +39,23 @@ enum BouncingError {
 }
 
 fn get_player_velocity(world: &mut World) -> Result<Vector3<f32>, MageError> {
-    let result = world.query_mut::<&Velocity>().with::<Input>().into_iter().next();
-    result.ok_or_else(|| BouncingError::NoPlayer.into())
+    let result = world
+        .query_mut::<&Velocity>()
+        .with::<Input>()
+        .into_iter()
+        .next();
+    result
+        .ok_or_else(|| BouncingError::NoPlayer.into())
         .map(|(_, v)| v.0)
 }
 
-fn handle_ball_bounces(delta_time: u64, broken_blocks: &mut Vec<Entity>, collisions: &&Collisions, props: &mut BouncingProperties, velocity: &mut Velocity) {
+fn handle_ball_bounces(
+    delta_time: u64,
+    broken_blocks: &mut Vec<Entity>,
+    collisions: &&Collisions,
+    props: &mut BouncingProperties,
+    velocity: &mut Velocity,
+) {
     let (mut x, mut y) = (false, false);
     for collision in &collisions.0 {
         if let Collision::Started(entity_id, contact_pair, user_data) = collision {
@@ -86,8 +97,8 @@ fn handle_ball_bounces(delta_time: u64, broken_blocks: &mut Vec<Entity>, collisi
     }
     props.current_velocity.x *= x.then_some(-1.0).unwrap_or(1.0);
     props.current_velocity.y *= y.then_some(-1.0).unwrap_or(1.0);
-    velocity.0 = Vector3::new(props.current_velocity.x, props.current_velocity.y, 0.0)
-        * delta_time as f32;
+    velocity.0 =
+        Vector3::new(props.current_velocity.x, props.current_velocity.y, 0.0) * delta_time as f32;
 }
 
 impl System for BouncingControlsSystem {

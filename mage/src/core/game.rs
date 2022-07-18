@@ -147,7 +147,8 @@ impl<N: Engine> Game<N> {
             self.world.add_system(system);
         }
 
-        self.engine.setup(&mut self.world.world, self.rendering_parameters)?;
+        self.engine
+            .setup(&mut self.world.world, self.rendering_parameters)?;
         self.world.start();
         let mut lag = 0;
         self.update_world(0);

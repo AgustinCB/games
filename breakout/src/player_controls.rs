@@ -84,7 +84,8 @@ impl System for PlayerControlsSystem {
                         x_velocity += player_velocity;
                     }
                     Event::KeyDown {
-                        keycode: Some(Keycode::Space), ..
+                        keycode: Some(Keycode::Space),
+                        ..
                     } if !self.unstick.load(Ordering::Relaxed) => {
                         self.unstick.store(true, Ordering::Relaxed);
                     }

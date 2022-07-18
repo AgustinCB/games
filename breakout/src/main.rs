@@ -214,7 +214,10 @@ fn main() {
             hx: PLAYER_WIDTH / 2.0,
             width: WIDTH,
         }),
-        Box::new(BouncingControlsSystem { unstick, game_state: status }),
+        Box::new(BouncingControlsSystem {
+            unstick,
+            game_state: status,
+        }),
     ])
         .unwrap();
 }
@@ -282,11 +285,7 @@ fn add_frontier(
 }
 
 fn add_ball(textures: &GameTextures, game: &mut Game<SimpleEngine<Fixed2dCamera>>) {
-    let position = Vector3::new(
-        WIDTH / 2.0,
-        PLAYER_HEIGHT + BALL_RADIUS,
-        0.3,
-    );
+    let position = Vector3::new(WIDTH / 2.0, PLAYER_HEIGHT + BALL_RADIUS, 0.3);
     let transform = TransformBuilder::new().build();
     let handle = game.spawn((
         rectangle(BALL_RADIUS, BALL_RADIUS, vec![textures.ball.clone()]),

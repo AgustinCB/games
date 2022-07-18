@@ -151,7 +151,7 @@ impl World {
                 continue;
             }
             if let Some(mut transform) =
-            handle_result(self.world.query_one::<&mut Transform>(entity))
+                handle_result(self.world.query_one::<&mut Transform>(entity))
             {
                 if let Some(transform) = transform.get() {
                     if !r

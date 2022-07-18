@@ -78,7 +78,11 @@ impl<C: Camera> SimpleEngine<C> {
 }
 
 impl<C: Camera> Engine for SimpleEngine<C> {
-    fn setup(&mut self, world: &mut World, rendering_parameters: RenderingParameters) -> Result<(), MageError> {
+    fn setup(
+        &mut self,
+        world: &mut World,
+        rendering_parameters: RenderingParameters,
+    ) -> Result<(), MageError> {
         self.rendering_parameters = rendering_parameters;
         enable(Feature::Depth);
         if self.rendering_parameters.blending_enabled {

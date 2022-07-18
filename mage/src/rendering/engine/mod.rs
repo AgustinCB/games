@@ -16,8 +16,11 @@ pub struct RenderingParameters {
 }
 
 pub trait Engine {
-    fn setup(&mut self, world: &mut World, rendering_parameters: RenderingParameters) -> Result<(), MageError>;
+    fn setup(
+        &mut self,
+        world: &mut World,
+        rendering_parameters: RenderingParameters,
+    ) -> Result<(), MageError>;
 
     fn render(&self, world: &mut World, delta_time: f32) -> Result<(), MageError>;
 }
-
